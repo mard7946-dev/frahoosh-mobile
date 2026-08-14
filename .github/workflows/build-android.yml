@@ -21,6 +21,19 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          find "$ANDROID_HOME" -maxdepth 3 \
+            \( -name sdkmanager -o -name sdkmanager.bat \) \
+            -print 2>/dev/null || true
+
+          ls -la "$ANDROID_HOME" || true
+          ls -la "$ANDROID_HOME/build-tools" || true
+          ls -la "$ANDROID_HOME/platforms" || true
+
       - name: Build APK
         working-directory: android
         run: |
@@ -49,22 +62,11 @@ jobs:
             echo "--------------------------------"
 
             ls -lh "$apk"
-
-            echo "FILE TYPE:"
             file "$apk"
 
             echo "APK CONTENT:"
             unzip -l "$apk" | head -50
           done
-
-          echo "================================"
-          echo "ANDROID SDK"
-          echo "================================"
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-
-          echo "BUILD TOOLS:"
-          ls -la "$ANDROID_HOME/build-tools" || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
