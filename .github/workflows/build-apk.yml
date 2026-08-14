@@ -11,22 +11,63 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull official Buildozer image
+      - name: Install Docker image
         run: |
-          docker pull ghcr.io/kivy/buildozer:latest
+          docker pull kivy/buildozer:latest
+
+      - name: Prepare Android SDK
+        run: |
+          docker run --rm \
+            --volume "$HOME/.buildozer:/home/user/.buildozer" \
+            kivy/buildozer:latest \
+            bash -lc '
+              SDK="$HOME/.buildozer/android/platform/android-sdk"
+
+              SDKMANAGER=$(find "$SDK" -name sdkmanager -type f | head -n 1)
+
+              echo "SDKMANAGER=$SDKMANAGER"
+
+              if [ -z "$SDKMANAGER" ]; then
+                echo "ERROR: sdkmanager not found"
+                exit 1
+              fi
+
+              yes | "$SDKMANAGER" --licenses
+
+              "$SDKMANAGER" \
+                "platform-tools" \
+                "platforms;android-35" \
+                "build-tools;35.0.0" \
+                "ndk;27.2.12479018"
+            '
 
       - name: Build APK
         run: |
-          mkdir -p "$HOME/.buildozer"
-
           docker run --rm \
             --volume "$HOME/.buildozer:/home/user/.buildozer" \
             --volume "$GITHUB_WORKSPACE:/home/user/hostcwd" \
-            ghcr.io/kivy/buildozer:latest \
-            android debug
+            kivy/buildozer:latest \
+            bash -lc '
+              cd /home/user/hostcwd
+
+              export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
+              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+
+              export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
+
+              echo "ANDROID_HOME=$ANDROID_HOME"
+
+              echo "Checking AIDL..."
+              "$ANDROID_HOME/build-tools/35.0.0/aidl" --version
+
+              echo "Starting Buildozer..."
+
+              buildozer android debug
+            '
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
