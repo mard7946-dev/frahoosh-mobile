@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Docker image
+      - name: Pull official Buildozer image
         run: |
           docker pull kivy/buildozer:latest
 
@@ -23,9 +23,12 @@ jobs:
         run: |
           docker run --rm \
             --volume "$HOME/.buildozer:/home/user/.buildozer" \
+            --volume "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             kivy/buildozer:latest \
             bash -lc '
-              SDK="$HOME/.buildozer/android/platform/android-sdk"
+              SDK="/home/user/.buildozer/android/platform/android-sdk"
+
+              echo "Searching for sdkmanager..."
 
               SDKMANAGER=$(find "$SDK" -name sdkmanager -type f | head -n 1)
 
@@ -43,6 +46,25 @@ jobs:
                 "platforms;android-35" \
                 "build-tools;35.0.0" \
                 "ndk;27.2.12479018"
+
+              echo "Android SDK preparation completed."
+            '
+
+      - name: Verify Android SDK
+        run: |
+          docker run --rm \
+            --volume "$HOME/.buildozer:/home/user/.buildozer" \
+            kivy/buildozer:latest \
+            bash -lc '
+              SDK="/home/user/.buildozer/android/platform/android-sdk"
+
+              echo "Checking Build Tools 35..."
+
+              test -f "$SDK/build-tools/35.0.0/aidl"
+
+              "$SDK/build-tools/35.0.0/aidl" --version
+
+              echo "AIDL is available."
             '
 
       - name: Build APK
@@ -54,14 +76,15 @@ jobs:
             bash -lc '
               cd /home/user/hostcwd
 
-              export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
+              export ANDROID_HOME="/home/user/.buildozer/android/platform/android-sdk"
               export ANDROID_SDK_ROOT="$ANDROID_HOME"
 
               export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
 
-              echo "ANDROID_HOME=$ANDROID_HOME"
+              echo "Running user:"
+              whoami
 
-              echo "Checking AIDL..."
+              echo "Checking AIDL:"
               "$ANDROID_HOME/build-tools/35.0.0/aidl" --version
 
               echo "Starting Buildozer..."
