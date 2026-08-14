@@ -10,6 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    env:
+      ACCEPT_ANDROID_SDK_LICENSES: "y"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,17 +52,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer==1.5.0 cython==0.29.37
 
-      - name: Accept Android SDK licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
-      - name: Install Android tools
-        run: |
-          sdkmanager "platform-tools" "build-tools;37.0.0"
-
       - name: Build APK
         run: |
-          buildozer android debug
+          yes | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
