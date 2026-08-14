@@ -20,41 +20,51 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.7"
-
-      - name: Check project
-        working-directory: android
-        run: |
-          echo "===== JAVA ====="
-          java -version
-
-          echo "===== GRADLE ====="
-          gradle --version
-
-          echo "===== PROJECT ====="
-          find . -maxdepth 8 -type f | sort
-
-      - name: Generate Gradle Wrapper
-        working-directory: android
-        run: |
-          gradle wrapper --gradle-version 8.7
-          chmod +x gradlew
 
       - name: Build APK
         working-directory: android
         run: |
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace --no-daemon
 
-      - name: Show APK
+      - name: Inspect APK
         if: always()
         run: |
-          echo "===== APK ====="
-          find android -type f -name "*.apk" -print
+          echo "================================"
+          echo "APK FILES"
+          echo "================================"
+
+          find "$GITHUB_WORKSPACE" \
+            -type f \
+            -name "*.apk" \
+            -print
+
+          echo "================================"
+          echo "APK INFO"
+          echo "================================"
+
+          for apk in $(find "$GITHUB_WORKSPACE" -type f -name "*.apk"); do
+            echo "--------------------------------"
+            echo "FILE: $apk"
+            echo "--------------------------------"
+
+            ls -lh "$apk"
+
+            echo "FILE TYPE:"
+            file "$apk"
+
+            echo "APK CONTENT:"
+            unzip -l "$apk" | head -50
+          done
+
+          echo "================================"
+          echo "ANDROID SDK"
+          echo "================================"
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
+          echo "BUILD TOOLS:"
+          ls -la "$ANDROID_HOME/build-tools" || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
