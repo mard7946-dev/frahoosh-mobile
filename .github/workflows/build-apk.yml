@@ -51,26 +51,43 @@ jobs:
           pip install buildozer==1.5.0
           pip install cython==0.29.37
 
-      - name: Accept Android SDK licenses
+      - name: Prepare Buildozer Android SDK
         run: |
-          yes | sdkmanager --licenses
+          export SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
 
-      - name: Install Android SDK
-        run: |
-          sdkmanager \
+          mkdir -p "$SDK_ROOT"
+
+          if [ -f "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            export SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          else
+            export SDKMANAGER="$(find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)"
+          fi
+
+          echo "SDKMANAGER=$SDKMANAGER"
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found"
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
             "build-tools;37.0.0"
 
-      - name: Verify Android SDK
+      - name: Verify AIDL
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "Checking AIDL..."
+          SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
 
-          test -x "$ANDROID_HOME/build-tools/37.0.0/aidl"
+          echo "Checking Android SDK:"
+          find "$SDK_ROOT/build-tools" -maxdepth 2 -name aidl -type f -print
 
-          "$ANDROID_HOME/build-tools/37.0.0/aidl" --version
+          test -f "$SDK_ROOT/build-tools/37.0.0/aidl"
+
+          "$SDK_ROOT/build-tools/37.0.0/aidl" --version
 
       - name: Build APK
         run: |
