@@ -15,82 +15,64 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull official Buildozer image
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install system packages
         run: |
-          docker pull kivy/buildozer:latest
+          sudo apt-get update
 
-      - name: Prepare Android SDK
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libltdl-dev
+
+      - name: Install Buildozer
         run: |
-          docker run --rm \
-            --volume "$HOME/.buildozer:/home/user/.buildozer" \
-            --volume "$GITHUB_WORKSPACE:/home/user/hostcwd" \
-            kivy/buildozer:latest \
-            bash -lc '
-              SDK="/home/user/.buildozer/android/platform/android-sdk"
+          python -m pip install --upgrade pip setuptools wheel
+          pip install buildozer
+          pip install "cython==0.29.37"
 
-              echo "Searching for sdkmanager..."
-
-              SDKMANAGER=$(find "$SDK" -name sdkmanager -type f | head -n 1)
-
-              echo "SDKMANAGER=$SDKMANAGER"
-
-              if [ -z "$SDKMANAGER" ]; then
-                echo "ERROR: sdkmanager not found"
-                exit 1
-              fi
-
-              yes | "$SDKMANAGER" --licenses
-
-              "$SDKMANAGER" \
-                "platform-tools" \
-                "platforms;android-35" \
-                "build-tools;35.0.0" \
-                "ndk;27.2.12479018"
-
-              echo "Android SDK preparation completed."
-            '
-
-      - name: Verify Android SDK
+      - name: Accept Android SDK licenses
         run: |
-          docker run --rm \
-            --volume "$HOME/.buildozer:/home/user/.buildozer" \
-            kivy/buildozer:latest \
-            bash -lc '
-              SDK="/home/user/.buildozer/android/platform/android-sdk"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
 
-              echo "Checking Build Tools 35..."
-
-              test -f "$SDK/build-tools/35.0.0/aidl"
-
-              "$SDK/build-tools/35.0.0/aidl" --version
-
-              echo "AIDL is available."
-            '
+      - name: Install Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Build APK
+        env:
+          P4A_RELEASE_KEYSTORE: ""
         run: |
-          docker run --rm \
-            --volume "$HOME/.buildozer:/home/user/.buildozer" \
-            --volume "$GITHUB_WORKSPACE:/home/user/hostcwd" \
-            kivy/buildozer:latest \
-            bash -lc '
-              cd /home/user/hostcwd
+          buildozer android debug
 
-              export ANDROID_HOME="/home/user/.buildozer/android/platform/android-sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
-
-              export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
-
-              echo "Running user:"
-              whoami
-
-              echo "Checking AIDL:"
-              "$ANDROID_HOME/build-tools/35.0.0/aidl" --version
-
-              echo "Starting Buildozer..."
-
-              buildozer android debug
-            '
+      - name: Find APK
+        run: |
+          echo "APK files:"
+          find bin -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
