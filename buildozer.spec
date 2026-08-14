@@ -14,15 +14,6 @@ requirements = python3,kivy,requests
 orientation = portrait
 fullscreen = 0
 
-android.api = 35
-android.minapi = 23
-android.ndk = 28b
-android.accept_sdk_license = True
-
-android.archs = arm64-v8a, armeabi-v7a
-
-android.permissions = INTERNET
-
 
 [buildozer]
 
