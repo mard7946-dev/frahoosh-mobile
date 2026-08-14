@@ -51,14 +51,26 @@ jobs:
           pip install buildozer==1.5.0
           pip install cython==0.29.37
 
-      - name: Setup Android SDK
+      - name: Accept Android SDK licenses
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          yes | sdkmanager --licenses
 
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+      - name: Install Android SDK
+        run: |
+          sdkmanager \
             "platform-tools" \
             "platforms;android-35" \
-            "build-tools;35.0.0"
+            "build-tools;35.0.0" \
+            "build-tools;37.0.0"
+
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "Checking AIDL..."
+
+          test -x "$ANDROID_HOME/build-tools/37.0.0/aidl"
+
+          "$ANDROID_HOME/build-tools/37.0.0/aidl" --version
 
       - name: Build APK
         run: |
