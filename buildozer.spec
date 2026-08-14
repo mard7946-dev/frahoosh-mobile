@@ -14,6 +14,8 @@ requirements = python3==3.11,kivy,requests
 orientation = portrait
 fullscreen = 0
 
+android.accept_sdk_license = True
+
 
 [android]
 
@@ -25,8 +27,6 @@ android.ndk = 27c
 android.archs = arm64-v8a
 
 android.permissions = INTERNET
-
-android.accept_sdk_license = True
 
 
 [buildozer]
