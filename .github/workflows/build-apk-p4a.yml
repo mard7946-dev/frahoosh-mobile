@@ -47,18 +47,33 @@ jobs:
             libncursesw5-dev \
             libltdl-dev
 
+      - name: Setup Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;25.2.9519653"
+
+      - name: Configure Android NDK
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
+
+          echo "Using NDK:"
+          "$ANDROID_HOME/ndk/25.2.9519653/ndk-build" --version
+
       - name: Install Python build tools
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
           python -m pip install "Cython>=3.0,<4"
           python -m pip install build
-
-      - name: Install python-for-android
-        run: |
           python -m pip install "python-for-android==2024.1.21"
 
-      - name: Verify tools
+      - name: Verify environment
         run: |
           echo "Python:"
           python --version
@@ -66,14 +81,21 @@ jobs:
           echo "Cython:"
           cython --version
 
+          echo "NDK:"
+          echo "$ANDROID_NDK_HOME"
+
+          echo "Android API:"
+          ls "$ANDROID_HOME/platforms/android-35"
+
           echo "python-for-android:"
           python -m pythonforandroid.toolchain --help
 
-      - name: Check project
+      - name: Check Frahoosh Mobile
         run: |
           echo "Project:"
           pwd
 
+          echo ""
           echo "Mobile files:"
           find mobile -maxdepth 3 -type f -print
 
@@ -102,6 +124,13 @@ jobs:
             -name "*.apk" \
             -print
 
+          echo ""
+          echo "Searching entire runner..."
+          find "$HOME/.local/share/python-for-android" \
+            -type f \
+            -name "*.apk" \
+            -print 2>/dev/null || true
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -109,5 +138,6 @@ jobs:
           path: |
             bin/*.apk
             dist/*.apk
-            *.apk
+            ${{ github.workspace }}/*.apk
+            /home/runner/.local/share/python-for-android/**/*.apk
           if-no-files-found: error
