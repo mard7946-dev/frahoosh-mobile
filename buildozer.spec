@@ -1,23 +1,33 @@
-- name: Build APK
-        run: |
-          docker run --rm \
-            --volume "$HOME/.buildozer:/home/user/.buildozer" \
-            --volume "$GITHUB_WORKSPACE:/home/user/hostcwd" \
-            kivy/buildozer:latest \
-            bash -lc '
-              cd /home/user/hostcwd
+[app]
 
-              export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+title = Frahoosh Mobile
+package.name = frahoosh
+package.domain = ir.frahoosh
 
-              export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
+source.dir = mobile
+source.include_exts = py,png,jpg,jpeg,kv,json
 
-              echo "ANDROID_HOME=$ANDROID_HOME"
+version = 1.0.0
 
-              echo "Checking AIDL..."
-              "$ANDROID_HOME/build-tools/35.0.0/aidl" --version
+requirements = python3==3.11,kivy,requests
 
-              echo "Starting Buildozer..."
+orientation = portrait
+fullscreen = 0
 
-              printf "y\n" | buildozer android debug
-            '
+
+[android]
+
+android.api = 35
+android.minapi = 23
+
+android.ndk = 27c
+
+android.archs = arm64-v8a
+
+android.permissions = INTERNET
+
+
+[buildozer]
+
+log_level = 2
+warn_on_root = 0
