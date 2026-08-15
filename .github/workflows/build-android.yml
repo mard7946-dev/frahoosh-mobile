@@ -154,6 +154,7 @@ jobs:
             --android-api 35 \
             --ndk-api 24 \
             --arch arm64-v8a \
+            --arch armeabi-v7a \
             --color=always \
             --debug
 
@@ -201,6 +202,14 @@ jobs:
           echo ""
           echo "APK file type:"
           file "$APK"
+
+          echo ""
+          echo "APK SHA256:"
+          sha256sum "$APK"
+
+          echo ""
+          echo "APK ZIP test:"
+          unzip -t "$APK"
 
           if [ ! -s "$APK" ]; then
             echo "ERROR: APK file is empty."
