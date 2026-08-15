@@ -1,19 +1,7 @@
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.label import Label
+from kivy.uix.screenmanager import ScreenManager
 
-
-class TestScreen(Screen):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.add_widget(
-            Label(
-                text="FRAHOOSH SCREEN TEST",
-                font_size=32
-            )
-        )
+from screens.login import LoginScreen
 
 
 class FrahooshMobileApp(App):
@@ -23,10 +11,10 @@ class FrahooshMobileApp(App):
         manager = ScreenManager()
 
         manager.add_widget(
-            TestScreen(name="test")
+            LoginScreen(name="login")
         )
 
-        manager.current = "test"
+        manager.current = "login"
 
         return manager
 
