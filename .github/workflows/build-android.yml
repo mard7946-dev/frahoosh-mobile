@@ -74,7 +74,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
-          python -m pip install "Cython>=3.0,<4"
+
+          # PyJNIus used by python-for-android currently requires
+          # a Cython version that still supports the "long" syntax.
+          python -m pip install "Cython==0.29.36"
+
           python -m pip install "python-for-android==2024.1.21"
 
       - name: Verify environment
@@ -104,7 +108,7 @@ jobs:
 
           echo ""
           echo "======================================"
-          echo "Android Build Tools"
+          echo "Build Tools"
           echo "======================================"
           ls -la "$ANDROID_HOME/build-tools/35.0.0"
 
