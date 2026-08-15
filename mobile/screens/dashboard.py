@@ -79,10 +79,10 @@ class DashboardScreen(Screen):
             ("🤖\nهوش مصنوعی نورا", self.open_ai),
         ]
 
-        for title, callback in buttons:
+        for button_title, callback in buttons:
 
             button = Button(
-                text=title,
+                text=button_title,
                 font_size=18,
                 bold=True
             )
@@ -161,7 +161,8 @@ class DashboardScreen(Screen):
         logout_button.bind(
             on_press=self.logout
         )
-        gout_button)
+
+        root.add_widget(logout_button)
 
         # ----------------------------------------------------
         # نسخه
@@ -175,6 +176,10 @@ class DashboardScreen(Screen):
         )
 
         root.add_widget(version)
+
+        # ----------------------------------------------------
+        # قرار دادن داشبورد روی صفحه
+        # ----------------------------------------------------
 
         self.add_widget(root)
 
@@ -252,15 +257,13 @@ class DashboardScreen(Screen):
     # ========================================================
 
     def open_update(self, instance):
-        self.manager.current = "update"
+        if self.manager:
+            self.manager.current = "update"
 
     # ========================================================
     # خروج
     # ========================================================
 
     def logout(self, instance):
-        self.manager.current = "login"
-
-        
-
-        root.add_widget(lo
+        if self.manager:
+            self.manager.current = "login"
