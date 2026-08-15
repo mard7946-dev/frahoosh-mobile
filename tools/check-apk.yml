@@ -1,1 +1,120 @@
+name: Check Frahoosh APK
 
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android tools
+        run: |
+          yes | sdkmanager --licenses || true
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Find APK
+        run: |
+          echo "======================================"
+          echo "SEARCHING FOR APK"
+          echo "======================================"
+
+          find . -type f -name "*.apk" -print
+
+      - name: Check APK
+        run: |
+          echo "======================================"
+          echo "APK CHECK"
+          echo "======================================"
+
+          APK="$(find . -type f -name "*.apk" | head -n 1)"
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: No APK found in repository."
+            exit 1
+          fi
+
+          echo "APK:"
+          echo "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "FILE INFORMATION"
+          echo "======================================"
+
+          ls -lh "$APK"
+          file "$APK"
+          sha256sum "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "ZIP TEST"
+          echo "======================================"
+
+          unzip -t "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "APK SIGNATURE"
+          echo "======================================"
+
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify \
+            --verbose \
+            --print-certs \
+            "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "APK BADGING"
+          echo "======================================"
+
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" \
+            dump badging \
+            "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "NATIVE LIBRARIES"
+          echo "======================================"
+
+          unzip -l "$APK" | grep "lib/" || true
+
+          echo ""
+          echo "======================================"
+          echo "MANIFEST"
+          echo "======================================"
+
+          unzip -l "$APK" | grep "AndroidManifest.xml"
+
+          echo ""
+          echo "======================================"
+          echo "DEX FILES"
+          echo "======================================"
+
+          unzip -l "$APK" | grep "\.dex" || true
+
+          echo ""
+          echo "======================================"
+          echo "PYTHON / KIVY FILES"
+          echo "======================================"
+
+          unzip -l "$APK" | grep -E \
+            "python|pybundle|kivy" \
+            | head -n 100 || true
+
+          echo ""
+          echo "======================================"
+          echo "CHECK COMPLETE"
+          echo "======================================"
