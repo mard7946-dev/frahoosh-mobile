@@ -3,20 +3,20 @@ from kivy.uix.screenmanager import ScreenManager
 
 from screens.login import LoginScreen
 
-class FrahooshMobileApp(App):
 
-```
-def build(self):
-    manager = ScreenManager()
+class FrahooshMobileApp:
 
-    manager.add_widget(
-        LoginScreen(name="login")
-    )
+    def build(self):
+        manager = ScreenManager()
 
-    manager.current = "login"
+        manager.add_widget(
+            LoginScreen(name="login")
+        )
 
-    return manager
-```
+        manager.current = "login"
 
-if **name** == "**main**":
-FrahooshMobileApp().run()
+        return manager
+
+
+if __name__ == "__main__":
+    FrahooshMobileApp().run()
