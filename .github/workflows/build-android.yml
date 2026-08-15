@@ -11,9 +11,13 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -21,43 +25,116 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Generate Gradle Wrapper
-        working-directory: android
+      - name: Install system packages
         run: |
-          gradle wrapper --gradle-version 8.7
-          chmod +x gradlew
+          sudo apt-get update
 
-      - name: Build APK
-        working-directory: android
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            cmake \
+            build-essential \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libltdl-dev
+
+      - name: Accept Android SDK licenses
         run: |
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          yes | sdkmanager --licenses || true
 
-      - name: Find APK
-        if: always()
+      - name: Install Android SDK
         run: |
-          echo "================================"
-          echo "APK FILES"
-          echo "================================"
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;25.2.9519653"
 
-          find "$GITHUB_WORKSPACE" \
-            -type f \
-            -name "*.apk" \
-            -print
-
-      - name: Inspect APK
-        if: always()
+      - name: Configure Android NDK
         run: |
-          for apk in $(find "$GITHUB_WORKSPACE" -type f -name "*.apk"); do
-            echo "================================"
-            echo "APK: $apk"
-            echo "================================"
-            ls -lh "$apk"
-            file "$apk"
-          done
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
 
-      - name: Upload APK
+      - name: Install Python build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel
+          python -m pip install "Cython>=3.0,<4"
+          python -m pip install "python-for-android==2024.1.21"
+
+      - name: Verify Frahoosh project
+        run: |
+          echo "======================================"
+          echo "Frahoosh Mobile project"
+          echo "======================================"
+
+          test -f mobile/main.py
+          test -d mobile/assets
+          test -d mobile/screens
+          test -d mobile/services
+
+          echo "Python application:"
+          ls -lh mobile/main.py
+
+          echo ""
+          echo "Project files:"
+          find mobile -maxdepth 3 -type f -print
+
+      - name: Build Frahoosh APK
+        run: |
+          python -m pythonforandroid.toolchain apk \
+            --private "$GITHUB_WORKSPACE/mobile" \
+            --package ir.frahoosh.mobile \
+            --name "Frahoosh Mobile" \
+            --version 1.0.0 \
+            --bootstrap sdl2 \
+            --requirements python3,kivy,requests \
+            --android-api 35 \
+            --ndk-api 24 \
+            --arch arm64-v8a \
+            --color=always \
+            --debug
+
+      - name: Verify APK
+        run: |
+          echo "======================================"
+          echo "Searching for APK"
+          echo "======================================"
+
+          APK="$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)"
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK was not created."
+            exit 1
+          fi
+
+          echo "APK found:"
+          echo "$APK"
+
+          echo ""
+          echo "APK information:"
+          ls -lh "$APK"
+          file "$APK"
+
+          if [ ! -s "$APK" ]; then
+            echo "ERROR: APK is empty."
+            exit 1
+          fi
+
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          cp "$APK" "$GITHUB_WORKSPACE/output/Frahoosh-Mobile.apk"
+
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: frahoosh-android-debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: Frahoosh-Mobile-APK
+          path: output/Frahoosh-Mobile.apk
           if-no-files-found: error
