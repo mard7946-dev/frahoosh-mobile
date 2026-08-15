@@ -21,26 +21,18 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Check Android SDK
+      - name: Generate Gradle Wrapper
+        working-directory: android
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          find "$ANDROID_HOME" -maxdepth 3 \
-            \( -name sdkmanager -o -name sdkmanager.bat \) \
-            -print 2>/dev/null || true
-
-          ls -la "$ANDROID_HOME" || true
-          ls -la "$ANDROID_HOME/build-tools" || true
-          ls -la "$ANDROID_HOME/platforms" || true
+          gradle wrapper --gradle-version 8.7
+          chmod +x gradlew
 
       - name: Build APK
         working-directory: android
         run: |
-          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace --no-daemon
 
-      - name: Inspect APK
+      - name: Find APK
         if: always()
         run: |
           echo "================================"
@@ -52,20 +44,15 @@ jobs:
             -name "*.apk" \
             -print
 
-          echo "================================"
-          echo "APK INFO"
-          echo "================================"
-
+      - name: Inspect APK
+        if: always()
+        run: |
           for apk in $(find "$GITHUB_WORKSPACE" -type f -name "*.apk"); do
-            echo "--------------------------------"
-            echo "FILE: $apk"
-            echo "--------------------------------"
-
+            echo "================================"
+            echo "APK: $apk"
+            echo "================================"
             ls -lh "$apk"
             file "$apk"
-
-            echo "APK CONTENT:"
-            unzip -l "$apk" | head -50
           done
 
       - name: Upload APK
