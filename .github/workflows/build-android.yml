@@ -75,8 +75,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
 
-          # PyJNIus used by python-for-android currently requires
-          # a Cython version that still supports the "long" syntax.
           python -m pip install "Cython==0.29.36"
 
           python -m pip install "python-for-android==2024.1.21"
@@ -223,6 +221,64 @@ jobs:
           echo ""
           echo "Final APK:"
           ls -lh "$GITHUB_WORKSPACE/output/Frahoosh-Mobile.apk"
+
+      - name: Analyze APK
+        if: success()
+        run: |
+          echo "======================================"
+          echo "APK ANALYSIS"
+          echo "======================================"
+
+          APK="$GITHUB_WORKSPACE/output/Frahoosh-Mobile.apk"
+
+          echo ""
+          echo "APK:"
+          echo "$APK"
+
+          echo ""
+          echo "======================================"
+          echo "APKSIGNER"
+          echo "======================================"
+
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+
+          if [ -f "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --verbose --print-certs "$APK"
+          else
+            echo "WARNING: apksigner not found."
+          fi
+
+          echo ""
+          echo "======================================"
+          echo "AAPT DUMP BADGING"
+          echo "======================================"
+
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+
+          if [ -f "$AAPT" ]; then
+            "$AAPT" dump badging "$APK"
+          else
+            echo "WARNING: aapt not found."
+          fi
+
+          echo ""
+          echo "======================================"
+          echo "APK CONTENT - NATIVE LIBRARIES"
+          echo "======================================"
+
+          unzip -l "$APK" | grep "lib/"
+
+          echo ""
+          echo "======================================"
+          echo "APK CONTENT - MANIFEST"
+          echo "======================================"
+
+          unzip -l "$APK" | grep "AndroidManifest.xml"
+
+          echo ""
+          echo "======================================"
+          echo "APK ANALYSIS COMPLETE"
+          echo "======================================"
 
       - name: Upload APK
         if: success()
