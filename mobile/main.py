@@ -1,7 +1,13 @@
+# ============================================================
+# Frahoosh Mobile
+# نقطه شروع نسخه موبایل
+# ============================================================
+
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 
 from screens.login import LoginScreen
+from screens.dashboard import DashboardScreen
 
 
 class FrahooshMobileApp(App):
@@ -12,6 +18,10 @@ class FrahooshMobileApp(App):
 
         manager.add_widget(
             LoginScreen(name="login")
+        )
+
+        manager.add_widget(
+            DashboardScreen(name="dashboard")
         )
 
         manager.current = "login"
