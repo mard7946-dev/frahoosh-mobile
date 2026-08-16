@@ -1,35 +1,12 @@
 # ============================================================
 # Frahoosh Mobile
-# داشبورد تست ورود
+# داشبورد ساده و پایدار برای دمو
 # ============================================================
-
-import os
 
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.core.text import LabelBase
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-FONT_PATH = os.path.join(
-    BASE_DIR,
-    "assets",
-    "Vazirmatn-Regular.ttf"
-)
-
-FONT_NAME = "Default"
-
-try:
-    if os.path.isfile(FONT_PATH):
-        LabelBase.register(
-            name="VazirFrahooshDashboard",
-            fn_regular=FONT_PATH
-        )
-        FONT_NAME = "VazirFrahooshDashboard"
-except Exception:
-    FONT_NAME = "Default"
 
 
 class DashboardScreen(Screen):
@@ -39,14 +16,13 @@ class DashboardScreen(Screen):
 
         root = BoxLayout(
             orientation="vertical",
-            padding=30,
+            padding=[30, 40, 30, 40],
             spacing=20
         )
 
         root.add_widget(
             Label(
-                text="فراهوش",
-                font_name=FONT_NAME,
+                text="Frahoosh",
                 font_size=32,
                 size_hint_y=None,
                 height=70
@@ -55,8 +31,7 @@ class DashboardScreen(Screen):
 
         root.add_widget(
             Label(
-                text="به فراهوش خوش آمدید",
-                font_name=FONT_NAME,
+                text="Welcome to Frahoosh",
                 font_size=22,
                 size_hint_y=None,
                 height=60
@@ -65,15 +40,13 @@ class DashboardScreen(Screen):
 
         root.add_widget(
             Label(
-                text="ورود با موفقیت انجام شد",
-                font_name=FONT_NAME,
+                text="Login successful",
                 font_size=18
             )
         )
 
         logout_button = Button(
-            text="خروج",
-            font_name=FONT_NAME,
+            text="Logout",
             font_size=18,
             size_hint_y=None,
             height=60
