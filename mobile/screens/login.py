@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Login
+# Professional Login - Compact Mobile UI
 # ============================================================
 
 import os
@@ -41,23 +41,22 @@ class LoginScreen(Screen):
                 source=background_path,
                 allow_stretch=True,
                 keep_ratio=False,
-                size_hint=(1, 1),
-                pos_hint={"x": 0, "y": 0}
+                size_hint=(1, 1)
             )
 
             root.add_widget(background)
 
         # ====================================================
-        # Dark Transparent Layer
+        # Dark Overlay
         # ====================================================
 
-        with root.canvas.before:
+        with root.canvas.after:
 
             Color(
                 0,
                 0,
                 0,
-                0.25
+                0.18
             )
 
             overlay = RoundedRectangle(
@@ -76,14 +75,14 @@ class LoginScreen(Screen):
         )
 
         # ====================================================
-        # Login Card
+        # LOGIN CARD
         # ====================================================
 
         card = BoxLayout(
             orientation="vertical",
-            padding=[28, 28, 28, 28],
-            spacing=14,
-            size_hint=(0.88, 0.70),
+            padding=[24, 24, 24, 24],
+            spacing=12,
+            size_hint=(0.82, 0.62),
             pos_hint={
                 "center_x": 0.5,
                 "center_y": 0.52
@@ -96,29 +95,23 @@ class LoginScreen(Screen):
                 1,
                 1,
                 1,
-                0.94
+                0.96
             )
 
-            card_background = RoundedRectangle(
+            card_bg = RoundedRectangle(
                 pos=card.pos,
                 size=card.size,
-                radius=[22]
+                radius=[24]
             )
 
         card.bind(
             pos=lambda instance, value:
-            self.update_background(
-                card_background,
-                instance
-            )
+            self.update_background(card_bg, instance)
         )
 
         card.bind(
             size=lambda instance, value:
-            self.update_background(
-                card_background,
-                instance
-            )
+            self.update_background(card_bg, instance)
         )
 
         # ====================================================
@@ -128,32 +121,32 @@ class LoginScreen(Screen):
         card.add_widget(
             Label(
                 text="FRAHOOSH",
-                font_size=36,
+                font_size=34,
                 bold=True,
-                color=(0.08, 0.18, 0.35, 1),
+                color=(0.06, 0.18, 0.38, 1),
                 size_hint_y=None,
-                height=65
+                height=58
             )
         )
 
         card.add_widget(
             Label(
                 text="Smart Educational System",
-                font_size=18,
+                font_size=17,
                 color=(0.25, 0.25, 0.25, 1),
                 size_hint_y=None,
-                height=40
+                height=36
             )
         )
 
         card.add_widget(
             Label(
                 text="Welcome",
-                font_size=25,
+                font_size=24,
                 bold=True,
-                color=(0.08, 0.18, 0.35, 1),
+                color=(0.06, 0.18, 0.38, 1),
                 size_hint_y=None,
-                height=48
+                height=42
             )
         )
 
@@ -163,14 +156,13 @@ class LoginScreen(Screen):
 
         self.username = TextInput(
             hint_text="Username",
-            font_size=21,
+            font_size=20,
             multiline=False,
             size_hint_y=None,
-            height=64,
-            padding=[18, 18],
-            background_color=(0.94, 0.95, 0.97, 1),
-            foreground_color=(0.08, 0.08, 0.08, 1),
-            cursor_color=(0.08, 0.18, 0.35, 1)
+            height=60,
+            padding=[18, 17],
+            background_color=(0.93, 0.95, 0.98, 1),
+            foreground_color=(0.05, 0.05, 0.05, 1)
         )
 
         card.add_widget(self.username)
@@ -181,21 +173,20 @@ class LoginScreen(Screen):
 
         self.password = TextInput(
             hint_text="Password",
-            font_size=21,
+            font_size=20,
             password=True,
             multiline=False,
             size_hint_y=None,
-            height=64,
-            padding=[18, 18],
-            background_color=(0.94, 0.95, 0.97, 1),
-            foreground_color=(0.08, 0.08, 0.08, 1),
-            cursor_color=(0.08, 0.18, 0.35, 1)
+            height=60,
+            padding=[18, 17],
+            background_color=(0.93, 0.95, 0.98, 1),
+            foreground_color=(0.05, 0.05, 0.05, 1)
         )
 
         card.add_widget(self.password)
 
         # ====================================================
-        # Login Button
+        # Login
         # ====================================================
 
         login_button = Button(
@@ -203,9 +194,9 @@ class LoginScreen(Screen):
             font_size=21,
             bold=True,
             size_hint_y=None,
-            height=68,
+            height=62,
             background_normal="",
-            background_color=(0.08, 0.35, 0.70, 1)
+            background_color=(0.06, 0.32, 0.68, 1)
         )
 
         login_button.bind(
@@ -221,10 +212,10 @@ class LoginScreen(Screen):
         card.add_widget(
             Label(
                 text="FRAHOOSH MOBILE  •  1.0.0",
-                font_size=13,
-                color=(0.35, 0.35, 0.35, 1),
+                font_size=12,
+                color=(0.40, 0.40, 0.40, 1),
                 size_hint_y=None,
-                height=30
+                height=28
             )
         )
 
@@ -242,7 +233,7 @@ class LoginScreen(Screen):
         background.size = widget.size
 
     # ========================================================
-    # Login
+    # LOGIN
     # ========================================================
 
     def login(self, instance):
