@@ -128,6 +128,8 @@ jobs:
           echo "Checking required files..."
 
           test -f mobile/main.py
+          test -f mobile/persian.py
+          test -f mobile/screens/login.py
           test -d mobile/assets
           test -d mobile/screens
           test -d mobile/services
@@ -135,6 +137,14 @@ jobs:
           echo ""
           echo "mobile/main.py:"
           ls -lh mobile/main.py
+
+          echo ""
+          echo "mobile/persian.py:"
+          ls -lh mobile/persian.py
+
+          echo ""
+          echo "mobile/screens/login.py:"
+          ls -lh mobile/screens/login.py
 
           echo ""
           echo "Mobile project files:"
@@ -148,7 +158,7 @@ jobs:
             --name "Frahoosh Mobile" \
             --version 1.0.0 \
             --bootstrap sdl2 \
-            --requirements python3,kivy,requests \
+            --requirements python3,kivy,requests,arabic-reshaper,python-bidi \
             --android-api 35 \
             --ndk-api 24 \
             --arch arm64-v8a \
