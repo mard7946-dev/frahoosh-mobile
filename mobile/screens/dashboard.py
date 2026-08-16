@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# داشبورد اصلی نسخه موبایل
+# داشبورد تست ورود
 # ============================================================
 
 import os
@@ -9,6 +9,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.core.text import LabelBase
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -17,6 +18,18 @@ FONT_PATH = os.path.join(
     "assets",
     "Vazirmatn-Regular.ttf"
 )
+
+FONT_NAME = "Default"
+
+try:
+    if os.path.isfile(FONT_PATH):
+        LabelBase.register(
+            name="VazirFrahooshDashboard",
+            fn_regular=FONT_PATH
+        )
+        FONT_NAME = "VazirFrahooshDashboard"
+except Exception:
+    FONT_NAME = "Default"
 
 
 class DashboardScreen(Screen):
@@ -33,7 +46,7 @@ class DashboardScreen(Screen):
         root.add_widget(
             Label(
                 text="فراهوش",
-                font_name=FONT_PATH,
+                font_name=FONT_NAME,
                 font_size=32,
                 size_hint_y=None,
                 height=70
@@ -42,9 +55,9 @@ class DashboardScreen(Screen):
 
         root.add_widget(
             Label(
-                text="به سامانه فراهوش خوش آمدید",
-                font_name=FONT_PATH,
-                font_size=20,
+                text="به فراهوش خوش آمدید",
+                font_name=FONT_NAME,
+                font_size=22,
                 size_hint_y=None,
                 height=60
             )
@@ -52,35 +65,15 @@ class DashboardScreen(Screen):
 
         root.add_widget(
             Label(
-                text="داشبورد اصلی",
-                font_name=FONT_PATH,
+                text="ورود با موفقیت انجام شد",
+                font_name=FONT_NAME,
                 font_size=18
             )
         )
 
-        students_button = Button(
-            text="دانش‌آموزان",
-            font_name=FONT_PATH,
-            font_size=18,
-            size_hint_y=None,
-            height=60
-        )
-
-        root.add_widget(students_button)
-
-        teachers_button = Button(
-            text="دبیران",
-            font_name=FONT_PATH,
-            font_size=18,
-            size_hint_y=None,
-            height=60
-        )
-
-        root.add_widget(teachers_button)
-
         logout_button = Button(
-            text="خروج از حساب",
-            font_name=FONT_PATH,
+            text="خروج",
+            font_name=FONT_NAME,
             font_size=18,
             size_hint_y=None,
             height=60
@@ -95,4 +88,6 @@ class DashboardScreen(Screen):
         self.add_widget(root)
 
     def logout(self, instance):
-        self.manager.current = "login"
+
+        if self.manager:
+            self.manager.current = "login"
