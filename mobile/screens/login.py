@@ -1,9 +1,7 @@
 # ============================================================
 # Frahoosh Mobile
-# صفحه ورود نسخه موبایل
+# صفحه ورود - نسخه پایدار
 # ============================================================
-
-import os
 
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
@@ -11,82 +9,21 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 
-from kivy.core.text import LabelBase
-from kivy.graphics import Color, RoundedRectangle
-
-
-# ------------------------------------------------------------
-# مسیر فونت
-# ------------------------------------------------------------
-
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-FONT_PATH = os.path.join(
-    BASE_DIR,
-    "assets",
-    "Vazirmatn-Regular.ttf"
-)
-
-FONT_NAME = "Default"
-
-try:
-    if os.path.isfile(FONT_PATH):
-        LabelBase.register(
-            name="FrahooshVazir",
-            fn_regular=FONT_PATH
-        )
-        FONT_NAME = "FrahooshVazir"
-except Exception:
-    FONT_NAME = "Default"
-
 
 class LoginScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # ----------------------------------------------------
-        # پس زمینه
-        # ----------------------------------------------------
-
-        with self.canvas.before:
-
-            Color(
-                0.04,
-                0.06,
-                0.10,
-                1
-            )
-
-            self.background = RoundedRectangle(
-                pos=self.pos,
-                size=self.size,
-                radius=[0]
-            )
-
-        self.bind(
-            pos=self._update_background,
-            size=self._update_background
-        )
-
-        # ----------------------------------------------------
-        # صفحه اصلی
-        # ----------------------------------------------------
-
         root = BoxLayout(
             orientation="vertical",
-            padding=[30, 40, 30, 40],
-            spacing=15
+            padding=30,
+            spacing=20
         )
-
-        # ----------------------------------------------------
-        # عنوان
-        # ----------------------------------------------------
 
         root.add_widget(
             Label(
                 text="فراهوش",
-                font_name=FONT_NAME,
                 font_size=32,
                 bold=True,
                 size_hint_y=None,
@@ -94,117 +31,50 @@ class LoginScreen(Screen):
             )
         )
 
-        # ----------------------------------------------------
-        # زیرعنوان
-        # ----------------------------------------------------
-
         root.add_widget(
             Label(
                 text="سامانه هوشمند آموزشی",
-                font_name=FONT_NAME,
                 font_size=20,
-                size_hint_y=None,
-                height=55
-            )
-        )
-
-        # ----------------------------------------------------
-        # فاصله
-        # ----------------------------------------------------
-
-        root.add_widget(
-            Label(
-                text="",
-                size_hint_y=None,
-                height=25
-            )
-        )
-
-        # ----------------------------------------------------
-        # نام کاربری
-        # ----------------------------------------------------
-
-        self.username = TextInput(
-            hint_text="نام کاربری",
-            font_name=FONT_NAME,
-            font_size=18,
-            multiline=False,
-            size_hint_y=None,
-            height=60,
-            padding=[15, 15]
-        )
-
-        root.add_widget(self.username)
-
-        # ----------------------------------------------------
-        # رمز عبور
-        # ----------------------------------------------------
-
-        self.password = TextInput(
-            hint_text="رمز عبور",
-            font_name=FONT_NAME,
-            font_size=18,
-            password=True,
-            multiline=False,
-            size_hint_y=None,
-            height=60,
-            padding=[15, 15]
-        )
-
-        root.add_widget(self.password)
-
-        # ----------------------------------------------------
-        # فاصله
-        # ----------------------------------------------------
-
-        root.add_widget(
-            Label(
-                text="",
-                size_hint_y=None,
-                height=20
-            )
-        )
-
-        # ----------------------------------------------------
-        # دکمه ورود
-        # ----------------------------------------------------
-
-        login_button = Button(
-            text="ورود به فراهوش",
-            font_name=FONT_NAME,
-            font_size=20,
-            size_hint_y=None,
-            height=65
-        )
-
-        login_button.bind(
-            on_press=self.login
-        )
-
-        root.add_widget(login_button)
-
-        # ----------------------------------------------------
-        # پیام آزمایشی
-        # ----------------------------------------------------
-
-        root.add_widget(
-            Label(
-                text="برای ورود، نام کاربری و رمز عبور را وارد کنید",
-                font_name=FONT_NAME,
-                font_size=14,
                 size_hint_y=None,
                 height=50
             )
         )
 
-        # ----------------------------------------------------
-        # نسخه
-        # ----------------------------------------------------
+        self.username = TextInput(
+            hint_text="نام کاربری",
+            font_size=18,
+            multiline=False,
+            size_hint_y=None,
+            height=60
+        )
+
+        root.add_widget(self.username)
+
+        self.password = TextInput(
+            hint_text="رمز عبور",
+            font_size=18,
+            password=True,
+            multiline=False,
+            size_hint_y=None,
+            height=60
+        )
+
+        root.add_widget(self.password)
+
+        login_button = Button(
+            text="ورود به فراهوش",
+            font_size=20,
+            size_hint_y=None,
+            height=65
+        )
+
+        login_button.bind(on_press=self.login)
+
+        root.add_widget(login_button)
 
         root.add_widget(
             Label(
                 text="نسخه 1.0.0",
-                font_name=FONT_NAME,
                 font_size=13,
                 size_hint_y=None,
                 height=35
@@ -213,32 +83,7 @@ class LoginScreen(Screen):
 
         self.add_widget(root)
 
-    # --------------------------------------------------------
-    # بروزرسانی پس زمینه
-    # --------------------------------------------------------
-
-    def _update_background(self, instance, value):
-
-        self.background.pos = self.pos
-        self.background.size = self.size
-
-    # --------------------------------------------------------
-    # ورود
-    # --------------------------------------------------------
-
     def login(self, instance):
-
-        username = self.username.text.strip()
-        password = self.password.text.strip()
-
-        # فعلاً ورود آزمایشی
-        # تا زمانی که سیستم احراز هویت واقعی وصل شود.
-
-        if not username or not password:
-
-            self.username.focus = True
-            return
-
-        if self.manager:
-
-            self.manager.current = "dashboard"
+        # فعلاً فقط تست رابط ورود
+        # تا زمانی که Dashboard را به ScreenManager اضافه نکرده‌ایم.
+        pass
