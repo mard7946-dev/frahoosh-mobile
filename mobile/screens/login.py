@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Login - Compact Mobile UI
+# Professional Persian Login
 # ============================================================
 
 import os
@@ -12,8 +12,37 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.uix.checkbox import CheckBox
 
+from kivy.core.text import LabelBase
 from kivy.graphics import Color, RoundedRectangle
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+BACKGROUND_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "f20639fa-bd85-4a6e-aad1-913d61e16875.png"
+)
+
+FONT_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "BTitr.ttf"
+)
+
+FONT_NAME = "Default"
+
+try:
+    if os.path.isfile(FONT_PATH):
+        LabelBase.register(
+            name="FrahooshBTitr",
+            fn_regular=FONT_PATH
+        )
+        FONT_NAME = "FrahooshBTitr"
+except Exception:
+    FONT_NAME = "Default"
 
 
 class LoginScreen(Screen):
@@ -27,18 +56,10 @@ class LoginScreen(Screen):
         # Background
         # ====================================================
 
-        base_dir = os.path.dirname(os.path.dirname(__file__))
-
-        background_path = os.path.join(
-            base_dir,
-            "assets",
-            "background.png"
-        )
-
-        if os.path.isfile(background_path):
+        if os.path.isfile(BACKGROUND_PATH):
 
             background = Image(
-                source=background_path,
+                source=BACKGROUND_PATH,
                 allow_stretch=True,
                 keep_ratio=False,
                 size_hint=(1, 1)
@@ -56,7 +77,7 @@ class LoginScreen(Screen):
                 0,
                 0,
                 0,
-                0.18
+                0.20
             )
 
             overlay = RoundedRectangle(
@@ -80,9 +101,9 @@ class LoginScreen(Screen):
 
         card = BoxLayout(
             orientation="vertical",
-            padding=[24, 24, 24, 24],
-            spacing=12,
-            size_hint=(0.82, 0.62),
+            padding=[28, 22, 28, 22],
+            spacing=10,
+            size_hint=(0.82, 0.68),
             pos_hint={
                 "center_x": 0.5,
                 "center_y": 0.52
@@ -101,7 +122,7 @@ class LoginScreen(Screen):
             card_bg = RoundedRectangle(
                 pos=card.pos,
                 size=card.size,
-                radius=[24]
+                radius=[22]
             )
 
         card.bind(
@@ -115,51 +136,47 @@ class LoginScreen(Screen):
         )
 
         # ====================================================
-        # Title
+        # APP NAME
         # ====================================================
 
         card.add_widget(
             Label(
-                text="FRAHOOSH",
-                font_size=34,
+                text="فراهوش",
+                font_name=FONT_NAME,
+                font_size=32,
                 bold=True,
-                color=(0.06, 0.18, 0.38, 1),
+                color=(0.05, 0.18, 0.38, 1),
                 size_hint_y=None,
-                height=58
-            )
-        )
-
-        card.add_widget(
-            Label(
-                text="Smart Educational System",
-                font_size=17,
-                color=(0.25, 0.25, 0.25, 1),
-                size_hint_y=None,
-                height=36
-            )
-        )
-
-        card.add_widget(
-            Label(
-                text="Welcome",
-                font_size=24,
-                bold=True,
-                color=(0.06, 0.18, 0.38, 1),
-                size_hint_y=None,
-                height=42
+                height=55
             )
         )
 
         # ====================================================
-        # Username
+        # SCHOOL NAME
+        # ====================================================
+
+        card.add_widget(
+            Label(
+                text="دبیرستان سردارحاجی زاده ۲",
+                font_name=FONT_NAME,
+                font_size=20,
+                color=(0.15, 0.15, 0.15, 1),
+                size_hint_y=None,
+                height=45
+            )
+        )
+
+        # ====================================================
+        # USERNAME
         # ====================================================
 
         self.username = TextInput(
-            hint_text="Username",
+            hint_text="نام کاربری",
+            font_name=FONT_NAME,
             font_size=20,
             multiline=False,
             size_hint_y=None,
-            height=60,
+            height=62,
             padding=[18, 17],
             background_color=(0.93, 0.95, 0.98, 1),
             foreground_color=(0.05, 0.05, 0.05, 1)
@@ -168,16 +185,17 @@ class LoginScreen(Screen):
         card.add_widget(self.username)
 
         # ====================================================
-        # Password
+        # PASSWORD
         # ====================================================
 
         self.password = TextInput(
-            hint_text="Password",
+            hint_text="رمز عبور",
+            font_name=FONT_NAME,
             font_size=20,
             password=True,
             multiline=False,
             size_hint_y=None,
-            height=60,
+            height=62,
             padding=[18, 17],
             background_color=(0.93, 0.95, 0.98, 1),
             foreground_color=(0.05, 0.05, 0.05, 1)
@@ -186,17 +204,63 @@ class LoginScreen(Screen):
         card.add_widget(self.password)
 
         # ====================================================
-        # Login
+        # REMEMBER + FORGOT PASSWORD
+        # ====================================================
+
+        options = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=42,
+            spacing=5
+        )
+
+        self.remember = CheckBox(
+            size_hint=(None, 1),
+            width=40
+        )
+
+        options.add_widget(self.remember)
+
+        options.add_widget(
+            Label(
+                text="مرا بخاطر بسپار",
+                font_name=FONT_NAME,
+                font_size=17,
+                color=(0.15, 0.15, 0.15, 1),
+                halign="right"
+            )
+        )
+
+        forgot = Button(
+            text="فراموشی رمز عبور",
+            font_name=FONT_NAME,
+            font_size=16,
+            color=(0.05, 0.30, 0.65, 1),
+            background_normal="",
+            background_color=(0, 0, 0, 0)
+        )
+
+        forgot.bind(
+            on_press=self.forgot_password
+        )
+
+        options.add_widget(forgot)
+
+        card.add_widget(options)
+
+        # ====================================================
+        # LOGIN BUTTON
         # ====================================================
 
         login_button = Button(
-            text="LOGIN",
-            font_size=21,
+            text="ورود به فراهوش",
+            font_name=FONT_NAME,
+            font_size=22,
             bold=True,
             size_hint_y=None,
-            height=62,
+            height=66,
             background_normal="",
-            background_color=(0.06, 0.32, 0.68, 1)
+            background_color=(0.05, 0.32, 0.68, 1)
         )
 
         login_button.bind(
@@ -206,13 +270,14 @@ class LoginScreen(Screen):
         card.add_widget(login_button)
 
         # ====================================================
-        # Footer
+        # VERSION
         # ====================================================
 
         card.add_widget(
             Label(
-                text="FRAHOOSH MOBILE  •  1.0.0",
-                font_size=12,
+                text="نسخه ۱.۰.۰",
+                font_name=FONT_NAME,
+                font_size=14,
                 color=(0.40, 0.40, 0.40, 1),
                 size_hint_y=None,
                 height=28
@@ -224,7 +289,7 @@ class LoginScreen(Screen):
         self.add_widget(root)
 
     # ========================================================
-    # Background Helper
+    # BACKGROUND
     # ========================================================
 
     def update_background(self, background, widget):
@@ -240,3 +305,11 @@ class LoginScreen(Screen):
 
         if self.manager:
             self.manager.current = "dashboard"
+
+    # ========================================================
+    # FORGOT PASSWORD
+    # ========================================================
+
+    def forgot_password(self, instance):
+
+        print("Frahoosh: Password recovery requested")
