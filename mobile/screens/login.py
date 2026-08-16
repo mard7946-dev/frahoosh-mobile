@@ -1,10 +1,7 @@
 # ============================================================
 # Frahoosh Mobile
-# صفحه ورود نسخه پایدار
-# ورود آزمایشی برای نمایش برنامه
+# Professional Login Screen
 # ============================================================
-
-import os
 
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
@@ -12,37 +9,6 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 
-from kivy.core.text import LabelBase
-
-
-# ------------------------------------------------------------
-# مسیر فونت فارسی
-# ------------------------------------------------------------
-
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-FONT_PATH = os.path.join(
-    BASE_DIR,
-    "assets",
-    "Vazirmatn-Regular (1).ttf"
-)
-
-FONT_NAME = "Default"
-
-try:
-    if os.path.isfile(FONT_PATH):
-        LabelBase.register(
-            name="FrahooshVazir",
-            fn_regular=FONT_PATH
-        )
-        FONT_NAME = "FrahooshVazir"
-except Exception:
-    FONT_NAME = "Default"
-
-
-# ============================================================
-# صفحه ورود
-# ============================================================
 
 class LoginScreen(Screen):
 
@@ -51,82 +17,97 @@ class LoginScreen(Screen):
 
         root = BoxLayout(
             orientation="vertical",
-            padding=[30, 40, 30, 40],
+            padding=[35, 45, 35, 35],
             spacing=18
         )
 
         # ----------------------------------------------------
-        # عنوان
+        # Header
         # ----------------------------------------------------
 
         root.add_widget(
             Label(
-                text="فراهوش",
-                font_name=FONT_NAME,
-                font_size=32,
+                text="🏫 FRAHOOSH",
+                font_size=34,
                 bold=True,
                 size_hint_y=None,
                 height=70
             )
         )
 
+        root.add_widget(
+            Label(
+                text="Smart Educational Management System",
+                font_size=18,
+                size_hint_y=None,
+                height=45
+            )
+        )
+
         # ----------------------------------------------------
-        # زیرعنوان
+        # Welcome
         # ----------------------------------------------------
 
         root.add_widget(
             Label(
-                text="سامانه هوشمند آموزشی",
-                font_name=FONT_NAME,
-                font_size=20,
+                text="Welcome",
+                font_size=25,
+                bold=True,
                 size_hint_y=None,
                 height=55
             )
         )
 
+        root.add_widget(
+            Label(
+                text="Please login to continue",
+                font_size=17,
+                size_hint_y=None,
+                height=40
+            )
+        )
+
         # ----------------------------------------------------
-        # نام کاربری
+        # Username
         # ----------------------------------------------------
 
         self.username = TextInput(
-            hint_text="نام کاربری",
-            font_name=FONT_NAME,
-            font_size=18,
+            hint_text="Username",
+            font_size=21,
             multiline=False,
             size_hint_y=None,
-            height=60,
-            padding=[15, 15]
+            height=65,
+            padding=[18, 18]
         )
 
         root.add_widget(self.username)
 
         # ----------------------------------------------------
-        # رمز عبور
+        # Password
         # ----------------------------------------------------
 
         self.password = TextInput(
-            hint_text="رمز عبور",
-            font_name=FONT_NAME,
-            font_size=18,
+            hint_text="Password",
+            font_size=21,
             password=True,
             multiline=False,
             size_hint_y=None,
-            height=60,
-            padding=[15, 15]
+            height=65,
+            padding=[18, 18]
         )
 
         root.add_widget(self.password)
 
         # ----------------------------------------------------
-        # دکمه ورود
+        # Login Button
         # ----------------------------------------------------
 
         login_button = Button(
-            text="ورود به فراهوش",
-            font_name=FONT_NAME,
-            font_size=20,
+            text="LOGIN",
+            font_size=21,
+            bold=True,
             size_hint_y=None,
-            height=65
+            height=70
         )
 
         login_button.bind(
@@ -136,41 +117,27 @@ class LoginScreen(Screen):
         root.add_widget(login_button)
 
         # ----------------------------------------------------
-        # نسخه
+        # Footer
         # ----------------------------------------------------
 
         root.add_widget(
             Label(
-                text="نسخه 1.0.0",
-                font_name=FONT_NAME,
-                font_size=13,
+                text="Frahoosh Mobile • Version 1.0.0",
+                font_size=14,
                 size_hint_y=None,
-                height=35
+                height=40
             )
         )
 
         self.add_widget(root)
 
     # ========================================================
-    # ورود آزمایشی
+    # Login
     # ========================================================
 
     def login(self, instance):
 
-        if not self.manager:
-            return
+        if self.manager:
 
-        # ----------------------------------------------------
-        # داشبورد فقط بعد از زدن دکمه ورود ساخته می‌شود.
-        # بنابراین هنگام لودینگ برنامه ساخته نمی‌شود.
-        # ----------------------------------------------------
-
-        if not self.manager.has_screen("dashboard"):
-
-            from screens.dashboard import DashboardScreen
-
-            self.manager.add_widget(
-                DashboardScreen(name="dashboard")
-            )
-
-        self.manager.current = "dashboard"
+            # Dashboard باید در main.py ثبت شده باشد
+            self.manager.current = "dashboard"
