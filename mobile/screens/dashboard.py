@@ -1,7 +1,7 @@
 # ============================================================
 # Frahoosh Mobile
-# Main Dashboard
-# Demo Version
+# Professional Dashboard
+# Accordion Panels
 # ============================================================
 
 from kivy.uix.screenmanager import Screen
@@ -19,13 +19,13 @@ class DashboardScreen(Screen):
         super().__init__(**kwargs)
 
         # ====================================================
-        # Main Layout
+        # Main
         # ====================================================
 
         root = BoxLayout(
             orientation="vertical",
             padding=[15, 15, 15, 15],
-            spacing=10
+            spacing=12
         )
 
         # ====================================================
@@ -34,25 +34,25 @@ class DashboardScreen(Screen):
 
         root.add_widget(
             Label(
-                text="🏫 Welcome to Frahoosh",
-                font_size=27,
+                text="🏫 FRAHOOSH",
+                font_size=30,
                 bold=True,
                 size_hint_y=None,
-                height=55
+                height=60
             )
         )
 
         root.add_widget(
             Label(
                 text="Smart Educational Management System",
-                font_size=16,
+                font_size=17,
                 size_hint_y=None,
-                height=35
+                height=40
             )
         )
 
         # ====================================================
-        # Scroll Area
+        # Scroll
         # ====================================================
 
         scroll = ScrollView(
@@ -62,7 +62,7 @@ class DashboardScreen(Screen):
         panels_layout = GridLayout(
             cols=1,
             spacing=10,
-            padding=[5, 5, 5, 20],
+            padding=[5, 5, 5, 15],
             size_hint_y=None
         )
 
@@ -71,171 +71,180 @@ class DashboardScreen(Screen):
         )
 
         # ====================================================
-        # Frahoosh Panels
+        # Panels
         # ====================================================
 
         panels = [
 
-            {
-                "title": "🏢 Management",
-                "items": [
-                    ("📊 School Overview", True),
-                    ("📢 Announcements", True),
-                    ("📅 School Calendar", True),
-                    ("📈 Reports", False),
-                    ("👥 Staff Management", False),
+            (
+                "🏢  MANAGEMENT",
+                [
+                    ("📊  School Overview", True),
+                    ("📢  Announcements", True),
+                    ("📅  School Calendar", True),
+                    ("📈  Reports", False),
+                    ("👥  Staff Management", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "👥 Executive Staff",
-                "items": [
-                    ("📋 Attendance", True),
-                    ("👨‍🎓 Student Records", False),
-                    ("📝 Daily Tasks", True),
-                    ("📊 Administrative Reports", False),
+            (
+                "👥  EXECUTIVE STAFF",
+                [
+                    ("📋  Attendance", True),
+                    ("📝  Daily Tasks", True),
+                    ("👨‍🎓  Student Records", False),
+                    ("📊  Administrative Reports", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "👨‍🏫 Teachers",
-                "items": [
-                    ("📝 Homework", True),
-                    ("📊 Grades", True),
-                    ("📅 Class Schedule", True),
-                    ("📈 Student Performance", False),
-                    ("📚 Question Bank", False),
+            (
+                "👨‍🏫  TEACHERS",
+                [
+                    ("📝  Homework", True),
+                    ("📊  Grades", True),
+                    ("📅  Class Schedule", True),
+                    ("📈  Student Performance", False),
+                    ("📚  Question Bank", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "🧠 Counseling",
-                "items": [
-                    ("💬 Counseling Requests", True),
-                    ("📅 Appointments", True),
-                    ("👨‍🎓 Student Counseling", False),
-                    ("📊 Counseling Reports", False),
+            (
+                "🧠  COUNSELING",
+                [
+                    ("💬  Counseling Requests", True),
+                    ("📅  Appointments", True),
+                    ("👨‍🎓  Student Counseling", False),
+                    ("📊  Counseling Reports", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "👨‍👩‍👧 Parents",
-                "items": [
-                    ("📢 Announcements", True),
-                    ("💬 Parent Feedback", True),
-                    ("👨‍🏫 Teacher Communication", False),
-                    ("📅 Meetings", False),
+            (
+                "👨‍👩‍👧  PARENTS",
+                [
+                    ("📢  Announcements", True),
+                    ("💬  Parent Feedback", True),
+                    ("👨‍🏫  Teacher Communication", False),
+                    ("📅  Meetings", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "🎓 Students",
-                "items": [
-                    ("👤 Student Profile", True),
-                    ("📝 Homework", True),
-                    ("📋 Attendance", False),
-                    ("📊 Grades", False),
-                    ("📈 Educational Progress", False),
+            (
+                "🎓  STUDENTS",
+                [
+                    ("👤  Student Profile", True),
+                    ("📝  Homework", True),
+                    ("📋  Attendance", False),
+                    ("📊  Grades", False),
+                    ("📈  Educational Progress", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "📚 Question Bank",
-                "items": [
-                    ("🔎 Browse Questions", True),
-                    ("📝 Sample Questions", True),
-                    ("➕ Create Question", False),
-                    ("🗂️ Question Categories", False),
+            (
+                "📚  QUESTION BANK",
+                [
+                    ("🔎  Browse Questions", True),
+                    ("📝  Sample Questions", True),
+                    ("➕  Create Question", False),
+                    ("🗂️  Question Categories", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "💻 Virtual Classes",
-                "items": [
-                    ("🎥 Active Classes", True),
-                    ("📅 Class Schedule", True),
-                    ("🚀 Join Class", False),
-                    ("🎬 Recorded Classes", False),
+            (
+                "💻  VIRTUAL CLASSES",
+                [
+                    ("🎥  Active Classes", True),
+                    ("📅  Class Schedule", True),
+                    ("🚀  Join Class", False),
+                    ("🎬  Recorded Classes", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "💰 Finance",
-                "items": [
-                    ("📊 Financial Overview", True),
-                    ("💳 Payment Status", True),
-                    ("📜 Payment History", False),
-                    ("💳 Online Payment", False),
+            (
+                "💰  FINANCE",
+                [
+                    ("📊  Financial Overview", True),
+                    ("💳  Payment Status", True),
+                    ("📜  Payment History", False),
+                    ("💳  Online Payment", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "📺 Smart Board",
-                "items": [
-                    ("📢 School Announcements", True),
-                    ("📅 Daily Schedule", True),
-                    ("⚠️ Important Messages", False),
-                    ("🚨 Emergency Notices", False),
+            (
+                "📺  SMART BOARD",
+                [
+                    ("📢  School Announcements", True),
+                    ("📅  Daily Schedule", True),
+                    ("⚠️  Important Messages", False),
+                    ("🚨  Emergency Notices", False),
                 ]
-            },
+            ),
 
-            {
-                "title": "🤖 Artificial Intelligence",
-                "items": [
-                    ("💬 AI Assistant", True),
-                    ("🎓 Educational Assistant", True),
-                    ("📊 Smart Analysis", False),
-                    ("📈 AI Reports", False),
+            (
+                "🤖  ARTIFICIAL INTELLIGENCE",
+                [
+                    ("💬  AI Assistant", True),
+                    ("🎓  Educational Assistant", True),
+                    ("📊  Smart Analysis", False),
+                    ("📈  AI Reports", False),
                 ]
-            },
-
+            ),
         ]
 
         # ====================================================
-        # Create Panels
+        # Create Accordion Panels
         # ====================================================
 
-        for panel in panels:
+        for title, items in panels:
 
             panel_box = BoxLayout(
                 orientation="vertical",
+                size_hint_y=None,
+                spacing=5
+            )
+
+            # ------------------------------------------------
+            # Main Panel Button
+            # ------------------------------------------------
+
+            panel_button = Button(
+                text=title,
+                font_size=20,
+                bold=True,
+                size_hint_y=None,
+                height=75
+            )
+
+            panel_box.add_widget(panel_button)
+
+            # ------------------------------------------------
+            # Submenu container
+            # ------------------------------------------------
+
+            submenu = GridLayout(
+                cols=1,
                 spacing=5,
                 size_hint_y=None,
-                padding=[5, 5, 5, 5]
+                height=0
             )
 
-            panel_box.bind(
-                minimum_height=panel_box.setter("height")
-            )
-
-            # ------------------------------------------------
-            # Panel Title
-            # ------------------------------------------------
-
-            panel_box.add_widget(
-                Label(
-                    text=panel["title"],
-                    font_size=21,
-                    bold=True,
-                    size_hint_y=None,
-                    height=50
-                )
+            submenu.bind(
+                minimum_height=submenu.setter("height")
             )
 
             # ------------------------------------------------
             # Submenus
             # ------------------------------------------------
 
-            for item_name, active in panel["items"]:
+            for item_name, active in items:
 
-                button = Button(
+                item_button = Button(
                     text=item_name,
-                    font_size=16,
+                    font_size=17,
                     size_hint_y=None,
-                    height=50
+                    height=58
                 )
 
-                button.bind(
+                item_button.bind(
                     on_press=lambda btn,
                     active=active: self.open_section(
                         btn.text,
@@ -243,7 +252,40 @@ class DashboardScreen(Screen):
                     )
                 )
 
-                panel_box.add_widget(button)
+                submenu.add_widget(item_button)
+
+            panel_box.add_widget(submenu)
+
+            # ------------------------------------------------
+            # Accordion function
+            # ------------------------------------------------
+
+            def toggle_panel(
+                button,
+                submenu=submenu,
+                panel_box=panel_box
+            ):
+
+                if submenu.height == 0:
+
+                    submenu.height = submenu.minimum_height
+
+                else:
+
+                    submenu.height = 0
+
+                panel_box.height = (
+                    panel_button.height +
+                    submenu.height +
+                    5
+                )
+
+            panel_button.bind(
+                on_press=toggle_panel
+            )
+
+            # Initially collapsed
+            panel_box.height = panel_button.height + 5
 
             panels_layout.add_widget(panel_box)
 
@@ -256,10 +298,11 @@ class DashboardScreen(Screen):
         # ====================================================
 
         logout_button = Button(
-            text="🚪 Logout",
-            font_size=17,
+            text="🚪  LOGOUT",
+            font_size=18,
+            bold=True,
             size_hint_y=None,
-            height=55
+            height=60
         )
 
         logout_button.bind(
@@ -271,7 +314,7 @@ class DashboardScreen(Screen):
         self.add_widget(root)
 
     # ========================================================
-    # Open Section
+    # Section
     # ========================================================
 
     def open_section(self, section_name, active):
@@ -288,13 +331,13 @@ class DashboardScreen(Screen):
 
             self.show_message(
                 section_name,
-                "🚧 Coming Soon\n\n"
+                "🚧  COMING SOON\n\n"
                 "This section is currently being updated.\n"
                 "It will be available soon."
             )
 
     # ========================================================
-    # Message Popup
+    # Popup
     # ========================================================
 
     def show_message(self, title, message):
@@ -308,14 +351,15 @@ class DashboardScreen(Screen):
         content.add_widget(
             Label(
                 text=message,
-                font_size=17
+                font_size=18
             )
         )
 
         close_button = Button(
             text="OK",
+            font_size=17,
             size_hint_y=None,
-            height=50
+            height=55
         )
 
         content.add_widget(close_button)
@@ -323,7 +367,7 @@ class DashboardScreen(Screen):
         popup = Popup(
             title=title,
             content=content,
-            size_hint=(0.85, 0.4),
+            size_hint=(0.88, 0.42),
             auto_dismiss=False
         )
 
