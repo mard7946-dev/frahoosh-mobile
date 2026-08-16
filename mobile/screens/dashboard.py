@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Dashboard
+# Professional Compact Dashboard
 # ============================================================
 
 import os
@@ -23,13 +23,13 @@ class DashboardScreen(Screen):
         super().__init__(**kwargs)
 
         # ====================================================
-        # Root
+        # ROOT
         # ====================================================
 
         root = FloatLayout()
 
         # ====================================================
-        # Background
+        # BACKGROUND
         # ====================================================
 
         base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -46,66 +46,73 @@ class DashboardScreen(Screen):
                 source=background_path,
                 allow_stretch=True,
                 keep_ratio=False,
-                size_hint=(1, 1),
-                pos_hint={"x": 0, "y": 0}
+                size_hint=(1, 1)
             )
 
             root.add_widget(background)
 
         # ====================================================
-        # Main Content
+        # MAIN CONTENT
         # ====================================================
 
         content = BoxLayout(
             orientation="vertical",
-            padding=[14, 14, 14, 12],
+            padding=[18, 12, 18, 12],
             spacing=8,
-            size_hint=(1, 1)
+            size_hint=(0.94, 1),
+            pos_hint={
+                "center_x": 0.5,
+                "y": 0
+            }
         )
 
         # ====================================================
-        # Header
+        # HEADER
         # ====================================================
 
         header = BoxLayout(
-            orientation="horizontal",
+            orientation="vertical",
             size_hint_y=None,
-            height=72,
-            spacing=8
+            height=82,
+            spacing=2
         )
 
         header.add_widget(
             Label(
                 text="FRAHOOSH",
-                font_size=29,
+                font_size=32,
                 bold=True,
-                color=(1, 1, 1, 1)
+                color=(1, 1, 1, 1),
+                size_hint_y=None,
+                height=43
             )
         )
 
         header.add_widget(
             Label(
-                text="Smart School",
+                text="Smart Educational Management System",
                 font_size=16,
-                color=(0.92, 0.95, 1, 1)
+                color=(0.94, 0.97, 1, 1),
+                size_hint_y=None,
+                height=30
             )
         )
 
         content.add_widget(header)
 
         # ====================================================
-        # Scroll
+        # SCROLL
         # ====================================================
 
         scroll = ScrollView(
             size_hint=(1, 1),
-            bar_width=5
+            bar_width=4
         )
 
         panels = GridLayout(
             cols=1,
-            spacing=8,
-            padding=[3, 3, 3, 15],
+            spacing=9,
+            padding=[8, 5, 8, 15],
             size_hint_y=None
         )
 
@@ -114,7 +121,7 @@ class DashboardScreen(Screen):
         )
 
         # ====================================================
-        # Panels
+        # PANEL DATA
         # ====================================================
 
         panel_data = [
@@ -129,7 +136,7 @@ class DashboardScreen(Screen):
                     ("Reports", False),
                     ("Staff Management", False),
                 ],
-                (0.10, 0.35, 0.70, 1)
+                (0.08, 0.35, 0.72, 1)
             ),
 
             (
@@ -141,7 +148,7 @@ class DashboardScreen(Screen):
                     ("Student Records", False),
                     ("Administrative Reports", False),
                 ],
-                (0.10, 0.50, 0.35, 1)
+                (0.08, 0.55, 0.40, 1)
             ),
 
             (
@@ -154,7 +161,7 @@ class DashboardScreen(Screen):
                     ("Student Performance", False),
                     ("Question Bank", False),
                 ],
-                (0.15, 0.48, 0.25, 1)
+                (0.15, 0.50, 0.25, 1)
             ),
 
             (
@@ -166,7 +173,7 @@ class DashboardScreen(Screen):
                     ("Student Counseling", False),
                     ("Counseling Reports", False),
                 ],
-                (0.45, 0.20, 0.55, 1)
+                (0.48, 0.20, 0.58, 1)
             ),
 
             (
@@ -178,7 +185,7 @@ class DashboardScreen(Screen):
                     ("Teacher Communication", False),
                     ("Meetings", False),
                 ],
-                (0.65, 0.30, 0.20, 1)
+                (0.68, 0.32, 0.18, 1)
             ),
 
             (
@@ -191,7 +198,7 @@ class DashboardScreen(Screen):
                     ("Grades", False),
                     ("Educational Progress", False),
                 ],
-                (0.20, 0.45, 0.60, 1)
+                (0.18, 0.45, 0.62, 1)
             ),
 
             (
@@ -203,7 +210,7 @@ class DashboardScreen(Screen):
                     ("Create Question", False),
                     ("Question Categories", False),
                 ],
-                (0.55, 0.30, 0.20, 1)
+                (0.55, 0.32, 0.20, 1)
             ),
 
             (
@@ -215,7 +222,7 @@ class DashboardScreen(Screen):
                     ("Join Class", False),
                     ("Recorded Classes", False),
                 ],
-                (0.10, 0.45, 0.60, 1)
+                (0.10, 0.48, 0.65, 1)
             ),
 
             (
@@ -227,7 +234,7 @@ class DashboardScreen(Screen):
                     ("Payment History", False),
                     ("Online Payment", False),
                 ],
-                (0.50, 0.30, 0.15, 1)
+                (0.52, 0.32, 0.15, 1)
             ),
 
             (
@@ -239,7 +246,7 @@ class DashboardScreen(Screen):
                     ("Important Messages", False),
                     ("Emergency Notices", False),
                 ],
-                (0.25, 0.40, 0.65, 1)
+                (0.22, 0.42, 0.68, 1)
             ),
 
             (
@@ -251,12 +258,12 @@ class DashboardScreen(Screen):
                     ("Smart Analysis", False),
                     ("AI Reports", False),
                 ],
-                (0.50, 0.20, 0.55, 1)
+                (0.52, 0.20, 0.58, 1)
             ),
         ]
 
         # ====================================================
-        # Create Panels
+        # CREATE PANELS
         # ====================================================
 
         for icon, title, items, color in panel_data:
@@ -264,7 +271,7 @@ class DashboardScreen(Screen):
             panel = BoxLayout(
                 orientation="vertical",
                 size_hint_y=None,
-                height=62,
+                height=58,
                 spacing=3,
                 padding=[3, 3, 3, 3]
             )
@@ -282,34 +289,35 @@ class DashboardScreen(Screen):
                     0.96
                 )
 
-                background_rect = RoundedRectangle(
+                panel_bg = RoundedRectangle(
                     pos=panel.pos,
                     size=panel.size,
-                    radius=[14]
+                    radius=[13]
                 )
 
             panel.bind(
                 pos=lambda instance, value,
-                bg=background_rect:
+                bg=panel_bg:
                 self.update_background(instance, bg)
             )
 
             panel.bind(
                 size=lambda instance, value,
-                bg=background_rect:
+                bg=panel_bg:
                 self.update_background(instance, bg)
             )
 
             # ------------------------------------------------
-            # Main Panel Button
+            # PANEL BUTTON
             # ------------------------------------------------
 
             main_button = Button(
                 text=icon + "   " + title,
-                font_size=19,
+                font_size=21,
                 bold=True,
                 size_hint_y=None,
-                height=56,
+                height=52,
+                color=(1, 1, 1, 1),
                 background_normal="",
                 background_color=(
                     color[0] * 0.82,
@@ -322,7 +330,7 @@ class DashboardScreen(Screen):
             panel.add_widget(main_button)
 
             # ------------------------------------------------
-            # Submenu
+            # SUBMENU
             # ------------------------------------------------
 
             submenu = GridLayout(
@@ -339,20 +347,38 @@ class DashboardScreen(Screen):
             for item_name, active in items:
 
                 if active:
+
                     prefix = "✓  "
-                    text_color = (0.05, 0.45, 0.20, 1)
+                    text_color = (
+                        0.05,
+                        0.42,
+                        0.18,
+                        1
+                    )
+
                 else:
+
                     prefix = "•  "
-                    text_color = (0.25, 0.25, 0.25, 1)
+                    text_color = (
+                        0.25,
+                        0.25,
+                        0.25,
+                        1
+                    )
 
                 item_button = Button(
                     text=prefix + item_name,
-                    font_size=17,
+                    font_size=19,
                     size_hint_y=None,
-                    height=52,
+                    height=56,
                     color=text_color,
                     background_normal="",
-                    background_color=(0.97, 0.97, 0.97, 1)
+                    background_color=(
+                        0.97,
+                        0.97,
+                        0.97,
+                        1
+                    )
                 )
 
                 item_button.bind(
@@ -369,7 +395,7 @@ class DashboardScreen(Screen):
             panel.add_widget(submenu)
 
             # ------------------------------------------------
-            # Accordion
+            # ACCORDION
             # ------------------------------------------------
 
             def toggle(
@@ -383,7 +409,7 @@ class DashboardScreen(Screen):
                     submenu.height = submenu.minimum_height
 
                     panel.height = (
-                        62 +
+                        58 +
                         submenu.minimum_height +
                         6
                     )
@@ -391,7 +417,8 @@ class DashboardScreen(Screen):
                 else:
 
                     submenu.height = 0
-                    panel.height = 62
+
+                    panel.height = 58
 
             main_button.bind(
                 on_press=toggle
@@ -399,22 +426,31 @@ class DashboardScreen(Screen):
 
             panels.add_widget(panel)
 
+        # ====================================================
+        # ADD SCROLL
+        # ====================================================
+
         scroll.add_widget(panels)
 
         content.add_widget(scroll)
 
         # ====================================================
-        # Logout
+        # LOGOUT
         # ====================================================
 
         logout_button = Button(
-            text="🚪  LOGOUT",
-            font_size=17,
+            text="🚪   LOGOUT",
+            font_size=18,
             bold=True,
             size_hint_y=None,
-            height=52,
+            height=54,
             background_normal="",
-            background_color=(0.55, 0.10, 0.10, 0.95)
+            background_color=(
+                0.55,
+                0.10,
+                0.10,
+                0.95
+            )
         )
 
         logout_button.bind(
@@ -428,7 +464,7 @@ class DashboardScreen(Screen):
         self.add_widget(root)
 
     # ========================================================
-    # Background Helper
+    # BACKGROUND
     # ========================================================
 
     def update_background(self, widget, background):
@@ -437,7 +473,7 @@ class DashboardScreen(Screen):
         background.size = widget.size
 
     # ========================================================
-    # Section
+    # SECTION
     # ========================================================
 
     def item_clicked(self, text, active):
@@ -457,10 +493,11 @@ class DashboardScreen(Screen):
             )
 
     # ========================================================
-    # Logout
+    # LOGOUT
     # ========================================================
 
     def logout(self, instance):
 
         if self.manager:
+
             self.manager.current = "login"
