@@ -13,6 +13,8 @@ from kivy.uix.button import Button
 
 from kivy.core.text import LabelBase
 
+from persian import fa
+
 
 # ------------------------------------------------------------
 # مسیر فونت فارسی
@@ -56,7 +58,7 @@ class LoginScreen(Screen):
 
         root.add_widget(
             Label(
-                text="فراهوش",
+                text=fa("فراهوش"),
                 font_name=FONT_NAME,
                 font_size=32,
                 bold=True,
@@ -71,7 +73,7 @@ class LoginScreen(Screen):
 
         root.add_widget(
             Label(
-                text="سامانه هوشمند آموزشی",
+                text=fa("سامانه هوشمند آموزشی"),
                 font_name=FONT_NAME,
                 font_size=20,
                 size_hint_y=None,
@@ -84,7 +86,7 @@ class LoginScreen(Screen):
         # ----------------------------------------------------
 
         self.username = TextInput(
-            hint_text="نام کاربری",
+            hint_text=fa("نام کاربری"),
             font_name=FONT_NAME,
             font_size=18,
             multiline=False,
@@ -100,7 +102,7 @@ class LoginScreen(Screen):
         # ----------------------------------------------------
 
         self.password = TextInput(
-            hint_text="رمز عبور",
+            hint_text=fa("رمز عبور"),
             font_name=FONT_NAME,
             font_size=18,
             password=True,
@@ -117,7 +119,7 @@ class LoginScreen(Screen):
         # ----------------------------------------------------
 
         login_button = Button(
-            text="ورود به فراهوش",
+            text=fa("ورود به فراهوش"),
             font_name=FONT_NAME,
             font_size=20,
             size_hint_y=None,
@@ -134,7 +136,7 @@ class LoginScreen(Screen):
 
         root.add_widget(
             Label(
-                text="نسخه 1.0.0",
+                text=fa("نسخه 1.0.0"),
                 font_name=FONT_NAME,
                 font_size=13,
                 size_hint_y=None,
