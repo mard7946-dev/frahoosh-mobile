@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Persian Dashboard
+# Professional Dashboard
 # ============================================================
 
 import os
@@ -13,7 +13,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
-
 from kivy.core.text import LabelBase
 from kivy.graphics import Color, RoundedRectangle
 
@@ -60,24 +59,24 @@ class DashboardScreen(Screen):
 
             background = Image(
                 source=BACKGROUND_PATH,
+                size_hint=(1, 1),
                 allow_stretch=True,
-                keep_ratio=False,
-                size_hint=(1, 1)
+                keep_ratio=False
             )
 
             root.add_widget(background)
 
         # ====================================================
-        # MAIN CONTENT
+        # MAIN CONTAINER
         # ====================================================
 
         content = BoxLayout(
             orientation="vertical",
-            padding=[18, 12, 18, 10],
-            spacing=7,
-            size_hint=(0.90, 1),
+            spacing=8,
+            padding=[18, 12, 28, 10],
+            size_hint=(0.88, 1),
             pos_hint={
-                "center_x": 0.5,
+                "center_x": 0.54,
                 "y": 0
             }
         )
@@ -89,14 +88,14 @@ class DashboardScreen(Screen):
         header = BoxLayout(
             orientation="vertical",
             size_hint_y=None,
-            height=90
+            height=88
         )
 
         header.add_widget(
             Label(
                 text="فراهوش",
                 font_name=FONT_NAME,
-                font_size=32,
+                font_size=34,
                 bold=True,
                 color=(1, 1, 1, 1),
                 size_hint_y=None,
@@ -108,7 +107,7 @@ class DashboardScreen(Screen):
             Label(
                 text="دبیرستان سردارحاجی زاده ۲",
                 font_name=FONT_NAME,
-                font_size=19,
+                font_size=20,
                 color=(1, 1, 1, 1),
                 size_hint_y=None,
                 height=38
@@ -123,13 +122,13 @@ class DashboardScreen(Screen):
 
         scroll = ScrollView(
             size_hint=(1, 1),
-            bar_width=4
+            bar_width=5
         )
 
         panels = GridLayout(
             cols=1,
             spacing=8,
-            padding=[12, 4, 25, 15],
+            padding=[8, 4, 8, 15],
             size_hint_y=None
         )
 
@@ -138,7 +137,7 @@ class DashboardScreen(Screen):
         )
 
         # ====================================================
-        # PANEL DATA
+        # PANELS
         # ====================================================
 
         panel_data = [
@@ -150,9 +149,9 @@ class DashboardScreen(Screen):
                     ("نمای کلی مدرسه", True),
                     ("اطلاعیه‌ها", True),
                     ("تقویم مدرسه", True),
-                    ("گزارش‌ها", False),
+                    ("گزارش‌ها", False)
                 ],
-                (0.08, 0.35, 0.72, 1)
+                (0.10, 0.35, 0.75)
             ),
 
             (
@@ -162,9 +161,9 @@ class DashboardScreen(Screen):
                     ("حضور و غیاب", True),
                     ("وظایف روزانه", True),
                     ("پرونده دانش‌آموزان", False),
-                    ("گزارش‌های اجرایی", False),
+                    ("گزارش اجرایی", False)
                 ],
-                (0.08, 0.55, 0.40, 1)
+                (0.10, 0.55, 0.40)
             ),
 
             (
@@ -174,9 +173,9 @@ class DashboardScreen(Screen):
                     ("ثبت تکلیف", True),
                     ("ثبت نمره", True),
                     ("برنامه کلاس", True),
-                    ("عملکرد دانش‌آموز", False),
+                    ("عملکرد دانش‌آموز", False)
                 ],
-                (0.15, 0.50, 0.25, 1)
+                (0.15, 0.50, 0.25)
             ),
 
             (
@@ -186,9 +185,9 @@ class DashboardScreen(Screen):
                     ("درخواست مشاوره", True),
                     ("نوبت مشاوره", True),
                     ("پرونده مشاوره", False),
-                    ("گزارش مشاوره", False),
+                    ("گزارش مشاوره", False)
                 ],
-                (0.48, 0.20, 0.58, 1)
+                (0.48, 0.20, 0.58)
             ),
 
             (
@@ -198,9 +197,9 @@ class DashboardScreen(Screen):
                     ("اطلاعیه‌ها", True),
                     ("نظردهی اولیاء", True),
                     ("ارتباط با دبیر", False),
-                    ("جلسات", False),
+                    ("جلسات", False)
                 ],
-                (0.68, 0.32, 0.18, 1)
+                (0.68, 0.32, 0.18)
             ),
 
             (
@@ -210,9 +209,9 @@ class DashboardScreen(Screen):
                     ("پروفایل دانش‌آموز", True),
                     ("تکالیف", True),
                     ("حضور و غیاب", False),
-                    ("نمرات", False),
+                    ("نمرات", False)
                 ],
-                (0.18, 0.45, 0.62, 1)
+                (0.18, 0.45, 0.62)
             ),
 
             (
@@ -222,9 +221,9 @@ class DashboardScreen(Screen):
                     ("مشاهده سوالات", True),
                     ("نمونه سوالات", True),
                     ("ثبت سوال", False),
-                    ("دسته‌بندی سوالات", False),
+                    ("دسته‌بندی سوالات", False)
                 ],
-                (0.55, 0.32, 0.20, 1)
+                (0.55, 0.32, 0.20)
             ),
 
             (
@@ -234,9 +233,9 @@ class DashboardScreen(Screen):
                     ("کلاس‌های فعال", True),
                     ("برنامه کلاس", True),
                     ("ورود به کلاس", False),
-                    ("کلاس‌های ضبط شده", False),
+                    ("کلاس ضبط شده", False)
                 ],
-                (0.10, 0.48, 0.65, 1)
+                (0.10, 0.48, 0.65)
             ),
 
             (
@@ -246,9 +245,9 @@ class DashboardScreen(Screen):
                     ("وضعیت مالی", True),
                     ("وضعیت پرداخت", True),
                     ("سوابق پرداخت", False),
-                    ("پرداخت آنلاین", False),
+                    ("پرداخت آنلاین", False)
                 ],
-                (0.52, 0.32, 0.15, 1)
+                (0.52, 0.32, 0.15)
             ),
 
             (
@@ -258,9 +257,9 @@ class DashboardScreen(Screen):
                     ("اطلاعیه مدرسه", True),
                     ("برنامه روزانه", True),
                     ("پیام‌های مهم", False),
-                    ("اعلامیه اضطراری", False),
+                    ("اعلامیه اضطراری", False)
                 ],
-                (0.22, 0.42, 0.68, 1)
+                (0.22, 0.42, 0.68)
             ),
 
             (
@@ -270,14 +269,14 @@ class DashboardScreen(Screen):
                     ("دستیار هوشمند", True),
                     ("دستیار آموزشی", True),
                     ("تحلیل هوشمند", False),
-                    ("گزارش هوشمند", False),
+                    ("گزارش هوشمند", False)
                 ],
-                (0.52, 0.20, 0.58, 1)
-            ),
+                (0.52, 0.20, 0.58)
+            )
         ]
 
         # ====================================================
-        # CREATE PANELS
+        # BUILD PANELS
         # ====================================================
 
         for icon, title, items, color in panel_data:
@@ -285,7 +284,7 @@ class DashboardScreen(Screen):
             panel = BoxLayout(
                 orientation="vertical",
                 size_hint_y=None,
-                height=58,
+                height=62,
                 spacing=3,
                 padding=[3, 3, 3, 3]
             )
@@ -302,32 +301,30 @@ class DashboardScreen(Screen):
                 panel_bg = RoundedRectangle(
                     pos=panel.pos,
                     size=panel.size,
-                    radius=[13]
+                    radius=[14]
                 )
 
             panel.bind(
-                pos=lambda instance, value,
-                bg=panel_bg:
-                self.update_background(instance, bg)
+                pos=lambda obj, value, bg=panel_bg:
+                self.update_rect(bg, obj)
             )
 
             panel.bind(
-                size=lambda instance, value,
-                bg=panel_bg:
-                self.update_background(instance, bg)
+                size=lambda obj, value, bg=panel_bg:
+                self.update_rect(bg, obj)
             )
 
             # =================================================
-            # PANEL BUTTON
+            # MAIN PANEL BUTTON
             # =================================================
 
             main_button = Button(
-                text=icon + "   " + title,
+                text=f"{icon}   {title}",
                 font_name=FONT_NAME,
-                font_size=23,
+                font_size=24,
                 bold=True,
                 size_hint_y=None,
-                height=52,
+                height=56,
                 color=(1, 1, 1, 1),
                 background_normal="",
                 background_color=(
@@ -360,46 +357,29 @@ class DashboardScreen(Screen):
                 if active:
 
                     prefix = "✓  "
-                    text_color = (
-                        0.04,
-                        0.40,
-                        0.16,
-                        1
-                    )
+                    text_color = (0.02, 0.42, 0.15, 1)
 
                 else:
 
                     prefix = "•  "
-                    text_color = (
-                        0.25,
-                        0.25,
-                        0.25,
-                        1
-                    )
+                    text_color = (0.28, 0.28, 0.28, 1)
 
                 item_button = Button(
                     text=prefix + item_name,
                     font_name=FONT_NAME,
-                    font_size=20,
+                    font_size=21,
                     size_hint_y=None,
-                    height=58,
+                    height=60,
                     color=text_color,
                     background_normal="",
-                    background_color=(
-                        0.97,
-                        0.97,
-                        0.97,
-                        1
-                    )
+                    background_color=(0.97, 0.97, 0.97, 1)
                 )
 
                 item_button.bind(
                     on_press=lambda btn,
-                    active=active:
-                    self.item_clicked(
-                        btn.text,
-                        active
-                    )
+                    name=item_name,
+                    enabled=active:
+                    self.open_section(name, enabled)
                 )
 
                 submenu.add_widget(item_button)
@@ -416,12 +396,12 @@ class DashboardScreen(Screen):
                 panel=panel
             ):
 
-                if submenu.height == 0:
+                if submenu.height <= 0:
 
                     submenu.height = submenu.minimum_height
 
                     panel.height = (
-                        58 +
+                        62 +
                         submenu.minimum_height +
                         6
                     )
@@ -429,8 +409,7 @@ class DashboardScreen(Screen):
                 else:
 
                     submenu.height = 0
-
-                    panel.height = 58
+                    panel.height = 62
 
             main_button.bind(
                 on_press=toggle
@@ -446,59 +425,57 @@ class DashboardScreen(Screen):
         # LOGOUT
         # ====================================================
 
-        logout_button = Button(
+        logout = Button(
             text="🚪   خروج از حساب",
             font_name=FONT_NAME,
-            font_size=19,
+            font_size=20,
             bold=True,
             size_hint_y=None,
-            height=55,
+            height=56,
             background_normal="",
-            background_color=(
-                0.55,
-                0.10,
-                0.10,
-                0.95
-            )
+            background_color=(0.55, 0.10, 0.10, 0.95)
         )
 
-        logout_button.bind(
+        logout.bind(
             on_press=self.logout
         )
 
-        content.add_widget(logout_button)
+        content.add_widget(logout)
 
         root.add_widget(content)
 
         self.add_widget(root)
 
     # ========================================================
-    # BACKGROUND
+    # RECTANGLE
     # ========================================================
 
-    def update_background(self, widget, background):
+    def update_rect(self, rect, widget):
 
-        background.pos = widget.pos
-        background.size = widget.size
+        rect.pos = widget.pos
+        rect.size = widget.size
 
     # ========================================================
     # ACTIVE SECTION
     # ========================================================
 
-    def item_clicked(self, text, active):
+    def open_section(self, name, enabled):
 
-        if active:
+        if enabled:
 
             print(
-                "Frahoosh Active Section:",
-                text
+                "Frahoosh active section:",
+                name
             )
+
+            # فعلاً صفحه اصلی را نگه می‌داریم
+            # تا بعداً برای هر بخش صفحه واقعی بسازیم.
 
         else:
 
             print(
-                "Frahoosh Coming Soon:",
-                text
+                "Frahoosh coming soon:",
+                name
             )
 
     # ========================================================
@@ -508,4 +485,5 @@ class DashboardScreen(Screen):
     def logout(self, instance):
 
         if self.manager:
+
             self.manager.current = "login"
