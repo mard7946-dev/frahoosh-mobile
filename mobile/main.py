@@ -1,8 +1,3 @@
-# ============================================================
-# Frahoosh Mobile
-# نقطه شروع نسخه موبایل
-# ============================================================
-
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 
