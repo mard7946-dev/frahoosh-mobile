@@ -1,7 +1,7 @@
 # ============================================================
 # Frahoosh Mobile
-# داشبورد اصلی نسخه موبایل
-# مرحله اول: 11 پنل اصلی فراهوش
+# Main Dashboard
+# Demo Version
 # ============================================================
 
 from kivy.uix.screenmanager import Screen
@@ -19,108 +19,244 @@ class DashboardScreen(Screen):
         super().__init__(**kwargs)
 
         # ====================================================
-        # صفحه اصلی
+        # Main Layout
         # ====================================================
 
         root = BoxLayout(
             orientation="vertical",
-            padding=[20, 20, 20, 20],
-            spacing=12
+            padding=[15, 15, 15, 15],
+            spacing=10
         )
 
         # ====================================================
-        # عنوان برنامه
+        # Header
         # ====================================================
 
-        title = Label(
-            text="Welcome to Frahoosh",
-            font_size=28,
-            bold=True,
-            size_hint_y=None,
-            height=60
+        root.add_widget(
+            Label(
+                text="🏫 Welcome to Frahoosh",
+                font_size=27,
+                bold=True,
+                size_hint_y=None,
+                height=55
+            )
         )
 
-        root.add_widget(title)
-
-        # ====================================================
-        # زیرعنوان
-        # ====================================================
-
-        subtitle = Label(
-            text="سامانه هوشمند آموزشی",
-            font_size=18,
-            size_hint_y=None,
-            height=45
+        root.add_widget(
+            Label(
+                text="Smart Educational Management System",
+                font_size=16,
+                size_hint_y=None,
+                height=35
+            )
         )
 
-        root.add_widget(subtitle)
-
         # ====================================================
-        # ناحیه پنل‌ها
+        # Scroll Area
         # ====================================================
 
         scroll = ScrollView(
             size_hint=(1, 1)
         )
 
-        panels = GridLayout(
-            cols=2,
-            spacing=12,
-            padding=[5, 10, 5, 20],
+        panels_layout = GridLayout(
+            cols=1,
+            spacing=10,
+            padding=[5, 5, 5, 20],
             size_hint_y=None
         )
 
-        panels.bind(
-            minimum_height=panels.setter("height")
+        panels_layout.bind(
+            minimum_height=panels_layout.setter("height")
         )
 
         # ====================================================
-        # 11 پنل اصلی فراهوش
+        # Frahoosh Panels
         # ====================================================
 
-        panel_names = [
-            "مدیریت",
-            "کادر اجرایی",
-            "دبیران",
-            "مشاوره",
-            "اولیاء",
-            "دانش‌آموزان",
-            "بانک سؤالات",
-            "کلاس‌های مجازی",
-            "امور مالی",
-            "تابلو هوشمند",
-            "هوش مصنوعی",
+        panels = [
+
+            {
+                "title": "🏢 Management",
+                "items": [
+                    ("📊 School Overview", True),
+                    ("📢 Announcements", True),
+                    ("📅 School Calendar", True),
+                    ("📈 Reports", False),
+                    ("👥 Staff Management", False),
+                ]
+            },
+
+            {
+                "title": "👥 Executive Staff",
+                "items": [
+                    ("📋 Attendance", True),
+                    ("👨‍🎓 Student Records", False),
+                    ("📝 Daily Tasks", True),
+                    ("📊 Administrative Reports", False),
+                ]
+            },
+
+            {
+                "title": "👨‍🏫 Teachers",
+                "items": [
+                    ("📝 Homework", True),
+                    ("📊 Grades", True),
+                    ("📅 Class Schedule", True),
+                    ("📈 Student Performance", False),
+                    ("📚 Question Bank", False),
+                ]
+            },
+
+            {
+                "title": "🧠 Counseling",
+                "items": [
+                    ("💬 Counseling Requests", True),
+                    ("📅 Appointments", True),
+                    ("👨‍🎓 Student Counseling", False),
+                    ("📊 Counseling Reports", False),
+                ]
+            },
+
+            {
+                "title": "👨‍👩‍👧 Parents",
+                "items": [
+                    ("📢 Announcements", True),
+                    ("💬 Parent Feedback", True),
+                    ("👨‍🏫 Teacher Communication", False),
+                    ("📅 Meetings", False),
+                ]
+            },
+
+            {
+                "title": "🎓 Students",
+                "items": [
+                    ("👤 Student Profile", True),
+                    ("📝 Homework", True),
+                    ("📋 Attendance", False),
+                    ("📊 Grades", False),
+                    ("📈 Educational Progress", False),
+                ]
+            },
+
+            {
+                "title": "📚 Question Bank",
+                "items": [
+                    ("🔎 Browse Questions", True),
+                    ("📝 Sample Questions", True),
+                    ("➕ Create Question", False),
+                    ("🗂️ Question Categories", False),
+                ]
+            },
+
+            {
+                "title": "💻 Virtual Classes",
+                "items": [
+                    ("🎥 Active Classes", True),
+                    ("📅 Class Schedule", True),
+                    ("🚀 Join Class", False),
+                    ("🎬 Recorded Classes", False),
+                ]
+            },
+
+            {
+                "title": "💰 Finance",
+                "items": [
+                    ("📊 Financial Overview", True),
+                    ("💳 Payment Status", True),
+                    ("📜 Payment History", False),
+                    ("💳 Online Payment", False),
+                ]
+            },
+
+            {
+                "title": "📺 Smart Board",
+                "items": [
+                    ("📢 School Announcements", True),
+                    ("📅 Daily Schedule", True),
+                    ("⚠️ Important Messages", False),
+                    ("🚨 Emergency Notices", False),
+                ]
+            },
+
+            {
+                "title": "🤖 Artificial Intelligence",
+                "items": [
+                    ("💬 AI Assistant", True),
+                    ("🎓 Educational Assistant", True),
+                    ("📊 Smart Analysis", False),
+                    ("📈 AI Reports", False),
+                ]
+            },
+
         ]
 
         # ====================================================
-        # ساخت پنل‌ها
+        # Create Panels
         # ====================================================
 
-        for panel_name in panel_names:
+        for panel in panels:
 
-            button = Button(
-                text=panel_name,
-                font_size=18,
+            panel_box = BoxLayout(
+                orientation="vertical",
+                spacing=5,
                 size_hint_y=None,
-                height=95
+                padding=[5, 5, 5, 5]
             )
 
-            button.bind(
-                on_press=self.open_panel
+            panel_box.bind(
+                minimum_height=panel_box.setter("height")
             )
 
-            panels.add_widget(button)
+            # ------------------------------------------------
+            # Panel Title
+            # ------------------------------------------------
 
-        scroll.add_widget(panels)
+            panel_box.add_widget(
+                Label(
+                    text=panel["title"],
+                    font_size=21,
+                    bold=True,
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+
+            # ------------------------------------------------
+            # Submenus
+            # ------------------------------------------------
+
+            for item_name, active in panel["items"]:
+
+                button = Button(
+                    text=item_name,
+                    font_size=16,
+                    size_hint_y=None,
+                    height=50
+                )
+
+                button.bind(
+                    on_press=lambda btn,
+                    active=active: self.open_section(
+                        btn.text,
+                        active
+                    )
+                )
+
+                panel_box.add_widget(button)
+
+            panels_layout.add_widget(panel_box)
+
+        scroll.add_widget(panels_layout)
 
         root.add_widget(scroll)
 
         # ====================================================
-        # دکمه خروج
+        # Logout
         # ====================================================
 
         logout_button = Button(
-            text="خروج از حساب",
+            text="🚪 Logout",
             font_size=17,
             size_hint_y=None,
             height=55
@@ -135,46 +271,58 @@ class DashboardScreen(Screen):
         self.add_widget(root)
 
     # ========================================================
-    # انتخاب پنل
+    # Open Section
     # ========================================================
 
-    def open_panel(self, instance):
+    def open_section(self, section_name, active):
 
-        panel_name = instance.text
+        if active:
 
-        popup_content = BoxLayout(
+            self.show_message(
+                section_name,
+                "This section is active.\n\n"
+                "Demo content will be available here."
+            )
+
+        else:
+
+            self.show_message(
+                section_name,
+                "🚧 Coming Soon\n\n"
+                "This section is currently being updated.\n"
+                "It will be available soon."
+            )
+
+    # ========================================================
+    # Message Popup
+    # ========================================================
+
+    def show_message(self, title, message):
+
+        content = BoxLayout(
             orientation="vertical",
             padding=20,
             spacing=15
         )
 
-        popup_content.add_widget(
+        content.add_widget(
             Label(
-                text=panel_name,
-                font_size=24,
-                bold=True
-            )
-        )
-
-        popup_content.add_widget(
-            Label(
-                text="این بخش در حال به‌روزرسانی است.\n"
-                     "به‌زودی امکانات این بخش در دسترس قرار خواهد گرفت.",
+                text=message,
                 font_size=17
             )
         )
 
         close_button = Button(
-            text="باشه",
+            text="OK",
             size_hint_y=None,
             height=50
         )
 
-        popup_content.add_widget(close_button)
+        content.add_widget(close_button)
 
         popup = Popup(
-            title="فراهوش",
-            content=popup_content,
+            title=title,
+            content=content,
             size_hint=(0.85, 0.4),
             auto_dismiss=False
         )
@@ -186,7 +334,7 @@ class DashboardScreen(Screen):
         popup.open()
 
     # ========================================================
-    # خروج
+    # Logout
     # ========================================================
 
     def logout(self, instance):
