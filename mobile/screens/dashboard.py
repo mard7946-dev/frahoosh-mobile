@@ -1,10 +1,13 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Color Dashboard
-# Stable Accordion Version
+# Professional Dashboard
 # ============================================================
 
+import os
+
 from kivy.uix.screenmanager import Screen
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -20,37 +23,75 @@ class DashboardScreen(Screen):
         super().__init__(**kwargs)
 
         # ====================================================
-        # Main Layout
+        # Root
         # ====================================================
 
-        root = BoxLayout(
+        root = FloatLayout()
+
+        # ====================================================
+        # Background
+        # ====================================================
+
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+
+        background_path = os.path.join(
+            base_dir,
+            "assets",
+            "background.png"
+        )
+
+        if os.path.isfile(background_path):
+
+            background = Image(
+                source=background_path,
+                allow_stretch=True,
+                keep_ratio=False,
+                size_hint=(1, 1),
+                pos_hint={"x": 0, "y": 0}
+            )
+
+            root.add_widget(background)
+
+        # ====================================================
+        # Main Content
+        # ====================================================
+
+        content = BoxLayout(
             orientation="vertical",
-            padding=[18, 18, 18, 18],
-            spacing=12
+            padding=[14, 14, 14, 12],
+            spacing=8,
+            size_hint=(1, 1)
         )
 
         # ====================================================
         # Header
         # ====================================================
 
-        root.add_widget(
+        header = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=72,
+            spacing=8
+        )
+
+        header.add_widget(
             Label(
                 text="FRAHOOSH",
-                font_size=34,
+                font_size=29,
                 bold=True,
-                size_hint_y=None,
-                height=65
+                color=(1, 1, 1, 1)
             )
         )
 
-        root.add_widget(
+        header.add_widget(
             Label(
-                text="Smart Educational Management System",
-                font_size=19,
-                size_hint_y=None,
-                height=45
+                text="Smart School",
+                font_size=16,
+                color=(0.92, 0.95, 1, 1)
             )
         )
+
+        content.add_widget(header)
 
         # ====================================================
         # Scroll
@@ -58,13 +99,13 @@ class DashboardScreen(Screen):
 
         scroll = ScrollView(
             size_hint=(1, 1),
-            bar_width=7
+            bar_width=5
         )
 
         panels = GridLayout(
             cols=1,
-            spacing=12,
-            padding=[4, 4, 4, 20],
+            spacing=8,
+            padding=[3, 3, 3, 15],
             size_hint_y=None
         )
 
@@ -73,14 +114,14 @@ class DashboardScreen(Screen):
         )
 
         # ====================================================
-        # Panel Data
+        # Panels
         # ====================================================
 
         panel_data = [
 
             (
-                "MANAGEMENT",
                 "🏢",
+                "MANAGEMENT",
                 [
                     ("School Overview", True),
                     ("Announcements", True),
@@ -88,24 +129,24 @@ class DashboardScreen(Screen):
                     ("Reports", False),
                     ("Staff Management", False),
                 ],
-                (0.15, 0.40, 0.80, 1)
+                (0.10, 0.35, 0.70, 1)
             ),
 
             (
-                "EXECUTIVE STAFF",
                 "👥",
+                "EXECUTIVE STAFF",
                 [
                     ("Attendance", True),
                     ("Daily Tasks", True),
                     ("Student Records", False),
                     ("Administrative Reports", False),
                 ],
-                (0.15, 0.60, 0.40, 1)
+                (0.10, 0.50, 0.35, 1)
             ),
 
             (
-                "TEACHERS",
                 "👨‍🏫",
+                "TEACHERS",
                 [
                     ("Homework", True),
                     ("Grades", True),
@@ -113,36 +154,36 @@ class DashboardScreen(Screen):
                     ("Student Performance", False),
                     ("Question Bank", False),
                 ],
-                (0.20, 0.55, 0.30, 1)
+                (0.15, 0.48, 0.25, 1)
             ),
 
             (
-                "COUNSELING",
                 "🧠",
+                "COUNSELING",
                 [
                     ("Counseling Requests", True),
                     ("Appointments", True),
                     ("Student Counseling", False),
                     ("Counseling Reports", False),
                 ],
-                (0.55, 0.30, 0.65, 1)
+                (0.45, 0.20, 0.55, 1)
             ),
 
             (
-                "PARENTS",
                 "👨‍👩‍👧",
+                "PARENTS",
                 [
                     ("Announcements", True),
                     ("Parent Feedback", True),
                     ("Teacher Communication", False),
                     ("Meetings", False),
                 ],
-                (0.65, 0.35, 0.25, 1)
+                (0.65, 0.30, 0.20, 1)
             ),
 
             (
-                "STUDENTS",
                 "🎓",
+                "STUDENTS",
                 [
                     ("Student Profile", True),
                     ("Homework", True),
@@ -150,67 +191,67 @@ class DashboardScreen(Screen):
                     ("Grades", False),
                     ("Educational Progress", False),
                 ],
-                (0.30, 0.55, 0.65, 1)
+                (0.20, 0.45, 0.60, 1)
             ),
 
             (
-                "QUESTION BANK",
                 "📚",
+                "QUESTION BANK",
                 [
                     ("Browse Questions", True),
                     ("Sample Questions", True),
                     ("Create Question", False),
                     ("Question Categories", False),
                 ],
-                (0.60, 0.35, 0.25, 1)
+                (0.55, 0.30, 0.20, 1)
             ),
 
             (
-                "VIRTUAL CLASSES",
                 "💻",
+                "VIRTUAL CLASSES",
                 [
                     ("Active Classes", True),
                     ("Class Schedule", True),
                     ("Join Class", False),
                     ("Recorded Classes", False),
                 ],
-                (0.20, 0.50, 0.65, 1)
+                (0.10, 0.45, 0.60, 1)
             ),
 
             (
-                "FINANCE",
                 "💰",
+                "FINANCE",
                 [
                     ("Financial Overview", True),
                     ("Payment Status", True),
                     ("Payment History", False),
                     ("Online Payment", False),
                 ],
-                (0.50, 0.35, 0.20, 1)
+                (0.50, 0.30, 0.15, 1)
             ),
 
             (
-                "SMART BOARD",
                 "📺",
+                "SMART BOARD",
                 [
                     ("School Announcements", True),
                     ("Daily Schedule", True),
                     ("Important Messages", False),
                     ("Emergency Notices", False),
                 ],
-                (0.30, 0.45, 0.70, 1)
+                (0.25, 0.40, 0.65, 1)
             ),
 
             (
-                "ARTIFICIAL INTELLIGENCE",
                 "🤖",
+                "ARTIFICIAL INTELLIGENCE",
                 [
                     ("AI Assistant", True),
                     ("Educational Assistant", True),
                     ("Smart Analysis", False),
                     ("AI Reports", False),
                 ],
-                (0.55, 0.25, 0.60, 1)
+                (0.50, 0.20, 0.55, 1)
             ),
         ]
 
@@ -218,18 +259,18 @@ class DashboardScreen(Screen):
         # Create Panels
         # ====================================================
 
-        for title, icon, items, color in panel_data:
+        for icon, title, items, color in panel_data:
 
             panel = BoxLayout(
                 orientation="vertical",
                 size_hint_y=None,
-                height=78,
-                spacing=5,
-                padding=[5, 5, 5, 5]
+                height=62,
+                spacing=3,
+                padding=[3, 3, 3, 3]
             )
 
             # ------------------------------------------------
-            # Background
+            # Panel Background
             # ------------------------------------------------
 
             with panel.canvas.before:
@@ -238,42 +279,42 @@ class DashboardScreen(Screen):
                     color[0],
                     color[1],
                     color[2],
-                    1
+                    0.96
                 )
 
-                background = RoundedRectangle(
+                background_rect = RoundedRectangle(
                     pos=panel.pos,
                     size=panel.size,
-                    radius=[16]
+                    radius=[14]
                 )
 
             panel.bind(
                 pos=lambda instance, value,
-                bg=background:
+                bg=background_rect:
                 self.update_background(instance, bg)
             )
 
             panel.bind(
                 size=lambda instance, value,
-                bg=background:
+                bg=background_rect:
                 self.update_background(instance, bg)
             )
 
             # ------------------------------------------------
-            # Main Button
+            # Main Panel Button
             # ------------------------------------------------
 
             main_button = Button(
                 text=icon + "   " + title,
-                font_size=22,
+                font_size=19,
                 bold=True,
                 size_hint_y=None,
-                height=70,
+                height=56,
                 background_normal="",
                 background_color=(
-                    color[0] * 0.75,
-                    color[1] * 0.75,
-                    color[2] * 0.75,
+                    color[0] * 0.82,
+                    color[1] * 0.82,
+                    color[2] * 0.82,
                     1
                 )
             )
@@ -286,7 +327,7 @@ class DashboardScreen(Screen):
 
             submenu = GridLayout(
                 cols=1,
-                spacing=5,
+                spacing=4,
                 size_hint_y=None,
                 height=0
             )
@@ -299,21 +340,19 @@ class DashboardScreen(Screen):
 
                 if active:
                     prefix = "✓  "
+                    text_color = (0.05, 0.45, 0.20, 1)
                 else:
                     prefix = "•  "
+                    text_color = (0.25, 0.25, 0.25, 1)
 
                 item_button = Button(
                     text=prefix + item_name,
-                    font_size=19,
+                    font_size=17,
                     size_hint_y=None,
-                    height=62,
+                    height=52,
+                    color=text_color,
                     background_normal="",
-                    background_color=(
-                        0.94,
-                        0.94,
-                        0.94,
-                        1
-                    )
+                    background_color=(0.97, 0.97, 0.97, 1)
                 )
 
                 item_button.bind(
@@ -344,15 +383,15 @@ class DashboardScreen(Screen):
                     submenu.height = submenu.minimum_height
 
                     panel.height = (
-                        78 +
+                        62 +
                         submenu.minimum_height +
-                        10
+                        6
                     )
 
                 else:
 
                     submenu.height = 0
-                    panel.height = 78
+                    panel.height = 62
 
             main_button.bind(
                 on_press=toggle
@@ -362,41 +401,43 @@ class DashboardScreen(Screen):
 
         scroll.add_widget(panels)
 
-        root.add_widget(scroll)
+        content.add_widget(scroll)
 
         # ====================================================
         # Logout
         # ====================================================
 
         logout_button = Button(
-            text="🚪   LOGOUT",
-            font_size=20,
+            text="🚪  LOGOUT",
+            font_size=17,
             bold=True,
             size_hint_y=None,
-            height=65,
+            height=52,
             background_normal="",
-            background_color=(0.65, 0.12, 0.12, 1)
+            background_color=(0.55, 0.10, 0.10, 0.95)
         )
 
         logout_button.bind(
             on_press=self.logout
         )
 
-        root.add_widget(logout_button)
+        content.add_widget(logout_button)
+
+        root.add_widget(content)
 
         self.add_widget(root)
 
     # ========================================================
-    # Background
+    # Background Helper
     # ========================================================
 
-    def update_background(self, instance, background):
+    def update_background(self, widget, background):
 
-        background.pos = instance.pos
-        background.size = instance.size
+        background.pos = widget.pos
+        background.size = widget.size
 
     # ========================================================
-    # Section Click
+    # Section
     # ========================================================
 
     def item_clicked(self, text, active):
