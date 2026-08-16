@@ -1,6 +1,7 @@
 # ============================================================
 # Frahoosh Mobile
 # Professional Login Screen
+# Stable Version
 # ============================================================
 
 from kivy.uix.screenmanager import Screen
@@ -15,43 +16,43 @@ class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        # ====================================================
+        # Main
+        # ====================================================
+
         root = BoxLayout(
             orientation="vertical",
-            padding=[35, 45, 35, 35],
+            padding=[35, 55, 35, 40],
             spacing=18
         )
 
-        # ----------------------------------------------------
-        # Header
-        # ----------------------------------------------------
+        # ====================================================
+        # Logo / Title
+        # ====================================================
 
         root.add_widget(
             Label(
-                text="🏫 FRAHOOSH",
-                font_size=34,
+                text="FRAHOOSH",
+                font_size=38,
                 bold=True,
                 size_hint_y=None,
-                height=70
+                height=75
             )
         )
 
         root.add_widget(
             Label(
-                text="Smart Educational Management System",
-                font_size=18,
+                text="Smart Educational System",
+                font_size=21,
                 size_hint_y=None,
-                height=45
+                height=48
             )
         )
-
-        # ----------------------------------------------------
-        # Welcome
-        # ----------------------------------------------------
 
         root.add_widget(
             Label(
                 text="Welcome",
-                font_size=25,
+                font_size=27,
                 bold=True,
                 size_hint_y=None,
                 height=55
@@ -60,54 +61,54 @@ class LoginScreen(Screen):
 
         root.add_widget(
             Label(
-                text="Please login to continue",
+                text="Please enter your account information",
                 font_size=17,
                 size_hint_y=None,
                 height=40
             )
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # Username
-        # ----------------------------------------------------
+        # ====================================================
 
         self.username = TextInput(
             hint_text="Username",
-            font_size=21,
+            font_size=22,
             multiline=False,
             size_hint_y=None,
-            height=65,
-            padding=[18, 18]
+            height=70,
+            padding=[20, 20]
         )
 
         root.add_widget(self.username)
 
-        # ----------------------------------------------------
+        # ====================================================
         # Password
-        # ----------------------------------------------------
+        # ====================================================
 
         self.password = TextInput(
             hint_text="Password",
-            font_size=21,
+            font_size=22,
             password=True,
             multiline=False,
             size_hint_y=None,
-            height=65,
-            padding=[18, 18]
+            height=70,
+            padding=[20, 20]
         )
 
         root.add_widget(self.password)
 
-        # ----------------------------------------------------
+        # ====================================================
         # Login Button
-        # ----------------------------------------------------
+        # ====================================================
 
         login_button = Button(
             text="LOGIN",
-            font_size=21,
+            font_size=23,
             bold=True,
             size_hint_y=None,
-            height=70
+            height=75
         )
 
         login_button.bind(
@@ -116,13 +117,13 @@ class LoginScreen(Screen):
 
         root.add_widget(login_button)
 
-        # ----------------------------------------------------
+        # ====================================================
         # Footer
-        # ----------------------------------------------------
+        # ====================================================
 
         root.add_widget(
             Label(
-                text="Frahoosh Mobile • Version 1.0.0",
+                text="FRAHOOSH MOBILE  •  VERSION 1.0.0",
                 font_size=14,
                 size_hint_y=None,
                 height=40
@@ -138,6 +139,4 @@ class LoginScreen(Screen):
     def login(self, instance):
 
         if self.manager:
-
-            # Dashboard باید در main.py ثبت شده باشد
             self.manager.current = "dashboard"
