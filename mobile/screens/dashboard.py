@@ -1,6 +1,6 @@
 # ============================================================
 # Frahoosh Mobile
-# Professional Compact Dashboard
+# Professional Persian Dashboard
 # ============================================================
 
 import os
@@ -14,7 +14,35 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 
+from kivy.core.text import LabelBase
 from kivy.graphics import Color, RoundedRectangle
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+BACKGROUND_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "f20639fa-bd85-4a6e-aad1-913d61e16875.png"
+)
+
+FONT_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "BTitr.ttf"
+)
+
+FONT_NAME = "Default"
+
+try:
+    if os.path.isfile(FONT_PATH):
+        LabelBase.register(
+            name="FrahooshBTitrDashboard",
+            fn_regular=FONT_PATH
+        )
+        FONT_NAME = "FrahooshBTitrDashboard"
+except Exception:
+    FONT_NAME = "Default"
 
 
 class DashboardScreen(Screen):
@@ -22,28 +50,16 @@ class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # ====================================================
-        # ROOT
-        # ====================================================
-
         root = FloatLayout()
 
         # ====================================================
         # BACKGROUND
         # ====================================================
 
-        base_dir = os.path.dirname(os.path.dirname(__file__))
-
-        background_path = os.path.join(
-            base_dir,
-            "assets",
-            "background.png"
-        )
-
-        if os.path.isfile(background_path):
+        if os.path.isfile(BACKGROUND_PATH):
 
             background = Image(
-                source=background_path,
+                source=BACKGROUND_PATH,
                 allow_stretch=True,
                 keep_ratio=False,
                 size_hint=(1, 1)
@@ -57,9 +73,9 @@ class DashboardScreen(Screen):
 
         content = BoxLayout(
             orientation="vertical",
-            padding=[18, 12, 18, 12],
-            spacing=8,
-            size_hint=(0.94, 1),
+            padding=[18, 12, 18, 10],
+            spacing=7,
+            size_hint=(0.90, 1),
             pos_hint={
                 "center_x": 0.5,
                 "y": 0
@@ -73,28 +89,29 @@ class DashboardScreen(Screen):
         header = BoxLayout(
             orientation="vertical",
             size_hint_y=None,
-            height=82,
-            spacing=2
+            height=90
         )
 
         header.add_widget(
             Label(
-                text="FRAHOOSH",
+                text="فراهوش",
+                font_name=FONT_NAME,
                 font_size=32,
                 bold=True,
                 color=(1, 1, 1, 1),
                 size_hint_y=None,
-                height=43
+                height=48
             )
         )
 
         header.add_widget(
             Label(
-                text="Smart Educational Management System",
-                font_size=16,
-                color=(0.94, 0.97, 1, 1),
+                text="دبیرستان سردارحاجی زاده ۲",
+                font_name=FONT_NAME,
+                font_size=19,
+                color=(1, 1, 1, 1),
                 size_hint_y=None,
-                height=30
+                height=38
             )
         )
 
@@ -111,8 +128,8 @@ class DashboardScreen(Screen):
 
         panels = GridLayout(
             cols=1,
-            spacing=9,
-            padding=[8, 5, 8, 15],
+            spacing=8,
+            padding=[12, 4, 25, 15],
             size_hint_y=None
         )
 
@@ -128,135 +145,132 @@ class DashboardScreen(Screen):
 
             (
                 "🏢",
-                "MANAGEMENT",
+                "مدیریت",
                 [
-                    ("School Overview", True),
-                    ("Announcements", True),
-                    ("School Calendar", True),
-                    ("Reports", False),
-                    ("Staff Management", False),
+                    ("نمای کلی مدرسه", True),
+                    ("اطلاعیه‌ها", True),
+                    ("تقویم مدرسه", True),
+                    ("گزارش‌ها", False),
                 ],
                 (0.08, 0.35, 0.72, 1)
             ),
 
             (
                 "👥",
-                "EXECUTIVE STAFF",
+                "کادر اجرایی",
                 [
-                    ("Attendance", True),
-                    ("Daily Tasks", True),
-                    ("Student Records", False),
-                    ("Administrative Reports", False),
+                    ("حضور و غیاب", True),
+                    ("وظایف روزانه", True),
+                    ("پرونده دانش‌آموزان", False),
+                    ("گزارش‌های اجرایی", False),
                 ],
                 (0.08, 0.55, 0.40, 1)
             ),
 
             (
                 "👨‍🏫",
-                "TEACHERS",
+                "دبیران",
                 [
-                    ("Homework", True),
-                    ("Grades", True),
-                    ("Class Schedule", True),
-                    ("Student Performance", False),
-                    ("Question Bank", False),
+                    ("ثبت تکلیف", True),
+                    ("ثبت نمره", True),
+                    ("برنامه کلاس", True),
+                    ("عملکرد دانش‌آموز", False),
                 ],
                 (0.15, 0.50, 0.25, 1)
             ),
 
             (
                 "🧠",
-                "COUNSELING",
+                "مشاوره",
                 [
-                    ("Counseling Requests", True),
-                    ("Appointments", True),
-                    ("Student Counseling", False),
-                    ("Counseling Reports", False),
+                    ("درخواست مشاوره", True),
+                    ("نوبت مشاوره", True),
+                    ("پرونده مشاوره", False),
+                    ("گزارش مشاوره", False),
                 ],
                 (0.48, 0.20, 0.58, 1)
             ),
 
             (
                 "👨‍👩‍👧",
-                "PARENTS",
+                "اولیاء",
                 [
-                    ("Announcements", True),
-                    ("Parent Feedback", True),
-                    ("Teacher Communication", False),
-                    ("Meetings", False),
+                    ("اطلاعیه‌ها", True),
+                    ("نظردهی اولیاء", True),
+                    ("ارتباط با دبیر", False),
+                    ("جلسات", False),
                 ],
                 (0.68, 0.32, 0.18, 1)
             ),
 
             (
                 "🎓",
-                "STUDENTS",
+                "دانش‌آموزان",
                 [
-                    ("Student Profile", True),
-                    ("Homework", True),
-                    ("Attendance", False),
-                    ("Grades", False),
-                    ("Educational Progress", False),
+                    ("پروفایل دانش‌آموز", True),
+                    ("تکالیف", True),
+                    ("حضور و غیاب", False),
+                    ("نمرات", False),
                 ],
                 (0.18, 0.45, 0.62, 1)
             ),
 
             (
                 "📚",
-                "QUESTION BANK",
+                "بانک سوالات",
                 [
-                    ("Browse Questions", True),
-                    ("Sample Questions", True),
-                    ("Create Question", False),
-                    ("Question Categories", False),
+                    ("مشاهده سوالات", True),
+                    ("نمونه سوالات", True),
+                    ("ثبت سوال", False),
+                    ("دسته‌بندی سوالات", False),
                 ],
                 (0.55, 0.32, 0.20, 1)
             ),
 
             (
                 "💻",
-                "VIRTUAL CLASSES",
+                "کلاس‌های مجازی",
                 [
-                    ("Active Classes", True),
-                    ("Class Schedule", True),
-                    ("Join Class", False),
-                    ("Recorded Classes", False),
+                    ("کلاس‌های فعال", True),
+                    ("برنامه کلاس", True),
+                    ("ورود به کلاس", False),
+                    ("کلاس‌های ضبط شده", False),
                 ],
                 (0.10, 0.48, 0.65, 1)
             ),
 
             (
                 "💰",
-                "FINANCE",
+                "امور مالی",
                 [
-                    ("Financial Overview", True),
-                    ("Payment Status", True),
-                    ("Payment History", False),
-                    ("Online Payment", False),
+                    ("وضعیت مالی", True),
+                    ("وضعیت پرداخت", True),
+                    ("سوابق پرداخت", False),
+                    ("پرداخت آنلاین", False),
                 ],
                 (0.52, 0.32, 0.15, 1)
             ),
 
             (
                 "📺",
-                "SMART BOARD",
+                "تابلو هوشمند",
                 [
-                    ("School Announcements", True),
-                    ("Daily Schedule", True),
-                    ("Important Messages", False),
-                    ("Emergency Notices", False),
+                    ("اطلاعیه مدرسه", True),
+                    ("برنامه روزانه", True),
+                    ("پیام‌های مهم", False),
+                    ("اعلامیه اضطراری", False),
                 ],
                 (0.22, 0.42, 0.68, 1)
             ),
 
             (
                 "🤖",
-                "ARTIFICIAL INTELLIGENCE",
+                "هوش مصنوعی",
                 [
-                    ("AI Assistant", True),
-                    ("Educational Assistant", True),
-                    ("Smart Analysis", False),
-                    ("AI Reports", False),
+                    ("دستیار هوشمند", True),
+                    ("دستیار آموزشی", True),
+                    ("تحلیل هوشمند", False),
+                    ("گزارش هوشمند", False),
                 ],
                 (0.52, 0.20, 0.58, 1)
             ),
@@ -275,10 +289,6 @@ class DashboardScreen(Screen):
                 spacing=3,
                 padding=[3, 3, 3, 3]
             )
-
-            # ------------------------------------------------
-            # Panel Background
-            # ------------------------------------------------
 
             with panel.canvas.before:
 
@@ -307,13 +317,14 @@ class DashboardScreen(Screen):
                 self.update_background(instance, bg)
             )
 
-            # ------------------------------------------------
+            # =================================================
             # PANEL BUTTON
-            # ------------------------------------------------
+            # =================================================
 
             main_button = Button(
                 text=icon + "   " + title,
-                font_size=21,
+                font_name=FONT_NAME,
+                font_size=23,
                 bold=True,
                 size_hint_y=None,
                 height=52,
@@ -329,9 +340,9 @@ class DashboardScreen(Screen):
 
             panel.add_widget(main_button)
 
-            # ------------------------------------------------
+            # =================================================
             # SUBMENU
-            # ------------------------------------------------
+            # =================================================
 
             submenu = GridLayout(
                 cols=1,
@@ -350,9 +361,9 @@ class DashboardScreen(Screen):
 
                     prefix = "✓  "
                     text_color = (
-                        0.05,
-                        0.42,
-                        0.18,
+                        0.04,
+                        0.40,
+                        0.16,
                         1
                     )
 
@@ -368,9 +379,10 @@ class DashboardScreen(Screen):
 
                 item_button = Button(
                     text=prefix + item_name,
-                    font_size=19,
+                    font_name=FONT_NAME,
+                    font_size=20,
                     size_hint_y=None,
-                    height=56,
+                    height=58,
                     color=text_color,
                     background_normal="",
                     background_color=(
@@ -394,9 +406,9 @@ class DashboardScreen(Screen):
 
             panel.add_widget(submenu)
 
-            # ------------------------------------------------
+            # =================================================
             # ACCORDION
-            # ------------------------------------------------
+            # =================================================
 
             def toggle(
                 instance,
@@ -426,10 +438,6 @@ class DashboardScreen(Screen):
 
             panels.add_widget(panel)
 
-        # ====================================================
-        # ADD SCROLL
-        # ====================================================
-
         scroll.add_widget(panels)
 
         content.add_widget(scroll)
@@ -439,11 +447,12 @@ class DashboardScreen(Screen):
         # ====================================================
 
         logout_button = Button(
-            text="🚪   LOGOUT",
-            font_size=18,
+            text="🚪   خروج از حساب",
+            font_name=FONT_NAME,
+            font_size=19,
             bold=True,
             size_hint_y=None,
-            height=54,
+            height=55,
             background_normal="",
             background_color=(
                 0.55,
@@ -473,7 +482,7 @@ class DashboardScreen(Screen):
         background.size = widget.size
 
     # ========================================================
-    # SECTION
+    # ACTIVE SECTION
     # ========================================================
 
     def item_clicked(self, text, active):
@@ -499,5 +508,4 @@ class DashboardScreen(Screen):
     def logout(self, instance):
 
         if self.manager:
-
             self.manager.current = "login"
