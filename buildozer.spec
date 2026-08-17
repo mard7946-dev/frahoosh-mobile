@@ -5,7 +5,7 @@ package.name = frahoosh
 package.domain = ir.frahoosh
 
 source.dir = mobile
-source.include_exts = py,png,jpg,jpeg,kv,json
+source.include_exts = py,png,jpg,jpeg,kv,json,ttf
 
 version = 1.0.0
 
