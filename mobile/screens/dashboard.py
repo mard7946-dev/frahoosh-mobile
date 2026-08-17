@@ -28,7 +28,7 @@ BACKGROUND_PATH = os.path.join(
 FONT_PATH = os.path.join(
     BASE_DIR,
     "assets",
-    "BTitr.ttf"
+    "B Titr Bold_0.ttf"
 )
 
 FONT_NAME = "Default"
