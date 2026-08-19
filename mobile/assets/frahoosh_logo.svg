@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="96" fill="#0b86c8"/>
+<circle cx="256" cy="220" r="118" fill="white"/>
+<path d="M145 265h222v70H145z" fill="white"/>
+<text x="256" y="420" text-anchor="middle" font-size="46" font-family="sans-serif" fill="white">FRAHOOSH</text>
+</svg>
