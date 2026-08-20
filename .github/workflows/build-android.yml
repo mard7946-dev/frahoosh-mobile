@@ -12,25 +12,25 @@ jobs:
 
     steps:
 
-      # --------------------------------
+      # ========================================
       # 1. Checkout
-      # --------------------------------
+      # ========================================
       - name: Checkout
         uses: actions/checkout@v4
 
 
-      # --------------------------------
+      # ========================================
       # 2. Python 3.11
-      # --------------------------------
+      # ========================================
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
 
-      # --------------------------------
+      # ========================================
       # 3. Java 17
-      # --------------------------------
+      # ========================================
       - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
@@ -38,11 +38,13 @@ jobs:
           java-version: "17"
 
 
-      # --------------------------------
+      # ========================================
       # 4. Linux dependencies
-      # --------------------------------
+      # ========================================
       - name: Install system dependencies
         run: |
+          set -e
+
           sudo apt-get update
 
           sudo apt-get install -y \
@@ -65,11 +67,13 @@ jobs:
             build-essential
 
 
-      # --------------------------------
+      # ========================================
       # 5. Install Buildozer
-      # --------------------------------
+      # ========================================
       - name: Install Buildozer
         run: |
+          set -e
+
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
 
@@ -77,85 +81,148 @@ jobs:
 
           python -m pip install "cython==0.29.36"
 
-          echo "Buildozer:"
+          echo "========================================"
+          echo "Buildozer version"
+          echo "========================================"
           buildozer --version
 
-          echo "Cython:"
+          echo "========================================"
+          echo "Cython version"
+          echo "========================================"
           cython --version
 
 
-      # --------------------------------
-      # 6. Android environment
-      # --------------------------------
+      # ========================================
+      # 6. Configure Android environment
+      # ========================================
       - name: Configure Android environment
         run: |
+          set -e
+
           SDK="/usr/local/lib/android/sdk"
 
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
-
           echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
 
           echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
           echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
-          echo "SDK=$SDK"
+          echo "========================================"
+          echo "Android SDK"
+          echo "========================================"
+          echo "$SDK"
 
-          echo "Modern sdkmanager:"
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
+          echo "========================================"
+          echo "Finding sdkmanager"
+          echo "========================================"
+
+          if [ -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$SDK/cmdline-tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK/cmdline-tools/bin/sdkmanager"
+          else
+            echo "ERROR: sdkmanager not found."
+            find "$SDK" -type f -name sdkmanager -print || true
+            exit 1
+          fi
+
+          echo "SDKMANAGER=$SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
+
+          echo "sdkmanager version:"
+          "$SDKMANAGER" --version
 
 
-      # --------------------------------
-      # 7. Accept licenses + install SDK
-      # --------------------------------
+      # ========================================
+      # 7. Accept licenses and install SDK
+      # ========================================
       - name: Install Android SDK components
         run: |
           set -e
 
           SDK="$ANDROID_HOME"
-          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          SDKMANAGER="$SDKMANAGER"
 
-          echo "Using sdkmanager:"
+          echo "========================================"
+          echo "Using SDK manager"
+          echo "========================================"
           echo "$SDKMANAGER"
 
           test -f "$SDKMANAGER"
 
-          chmod +x "$SDKMANAGER" || true
+          echo "========================================"
+          echo "Accept Android licenses"
+          echo "========================================"
 
-          echo "Accepting Android SDK licenses..."
+          yes | "$SDKMANAGER" --licenses || true
 
-          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          echo "========================================"
+          echo "Install Android SDK components"
+          echo "========================================"
 
-          echo "Installing required SDK packages..."
-
-          yes | "$SDKMANAGER" \
+          "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;35.0.0"
 
-          echo "SDK packages installed."
+          echo "========================================"
+          echo "Installed Android platforms"
+          echo "========================================"
 
-          echo "Installed platforms:"
-          ls -la "$SDK/platforms"
+          ls -lah "$SDK/platforms"
 
-          echo "Installed build tools:"
-          ls -la "$SDK/build-tools"
+          echo "========================================"
+          echo "Installed Build Tools"
+          echo "========================================"
+
+          ls -lah "$SDK/build-tools"
 
 
-      # --------------------------------
-      # 8. Patch Buildozer sdkmanager path
-      # --------------------------------
-      - name: Fix Buildozer SDK manager path
+      # ========================================
+      # 8. Prevent Buildozer from managing SDK
+      # ========================================
+      - name: Configure Buildozer SDK settings
         run: |
           set -e
 
-          BUILD0ZER_ANDROID=$(python - <<'PY'
+          echo "========================================"
+          echo "Buildozer configuration"
+          echo "========================================"
+
+          if [ -f buildozer.spec ]; then
+            echo "Current Android settings:"
+            grep -n -E \
+              "android.api|android.minapi|android.ndk|android.accept_sdk_license|android.archs" \
+              buildozer.spec || true
+          fi
+
+          echo ""
+          echo "Android SDK:"
+          echo "$ANDROID_HOME"
+
+          echo ""
+          echo "SDK manager:"
+          echo "$SDKMANAGER"
+
+
+      # ========================================
+      # 9. Patch Buildozer sdkmanager path
+      # ========================================
+      - name: Patch Buildozer SDK manager
+        run: |
+          set -e
+
+          BUILD0ZER_ANDROID="$(
+            python - <<'PY'
           import buildozer.targets.android
           print(buildozer.targets.android.__file__)
           PY
-          )
+          )"
 
-          echo "Buildozer Android target:"
+          echo "========================================"
+          echo "Buildozer Android target"
+          echo "========================================"
           echo "$BUILD0ZER_ANDROID"
 
           python - "$BUILD0ZER_ANDROID" <<'PY'
@@ -175,89 +242,171 @@ jobs:
           if old in text:
               text = text.replace(old, new)
               path.write_text(text)
-              print("Buildozer sdkmanager path patched successfully.")
+              print("SUCCESS: Buildozer sdkmanager path patched.")
           elif "cmdline-tools', 'latest', 'bin'" in text:
-              print("Buildozer already uses modern sdkmanager path.")
+              print("SUCCESS: Buildozer already uses modern sdkmanager path.")
           else:
-              print("ERROR: Could not locate Buildozer sdkmanager code.")
+              print("ERROR: Buildozer sdkmanager code was not found.")
+              print("Expected old path:")
+              print(old)
               sys.exit(1)
           PY
 
-          echo "Checking patched Buildozer source..."
+          echo "========================================"
+          echo "Verify Buildozer patch"
+          echo "========================================"
 
-          grep -n -A5 -B3 "sdkmanager_path" "$BUILD0ZER_ANDROID" || true
+          grep -n -A6 -B4 "sdkmanager_path" "$BUILD0ZER_ANDROID"
+
+          echo "========================================"
+          echo "Verify sdkmanager"
+          echo "========================================"
+
+          "$SDKMANAGER" --version
 
 
-      # --------------------------------
-      # 9. Verify project
-      # --------------------------------
+      # ========================================
+      # 10. Verify project
+      # ========================================
       - name: Verify Frahoosh project
         run: |
-          echo "Project root:"
+          set -e
+
+          echo "========================================"
+          echo "Project root"
+          echo "========================================"
+
           pwd
 
           echo ""
-          echo "buildozer.spec:"
+          echo "========================================"
+          echo "Project files"
+          echo "========================================"
+
+          find . -maxdepth 2 -type f \
+            ! -path "./.git/*" \
+            ! -path "./.buildozer/*" \
+            | sort
+
+          echo ""
+          echo "========================================"
+          echo "buildozer.spec"
+          echo "========================================"
+
           cat buildozer.spec
 
           echo ""
-          echo "Mobile files:"
+          echo "========================================"
+          echo "Mobile files"
+          echo "========================================"
+
           find mobile -maxdepth 3 -type f -print | sort
 
 
-      # --------------------------------
-      # 10. Clean Buildozer
-      # --------------------------------
+      # ========================================
+      # 11. Clean Buildozer
+      # ========================================
       - name: Clean Buildozer
         run: |
+          set -e
+
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
 
+          echo "Clean build environment ready."
 
-      # --------------------------------
-      # 11. Build APK
-      # --------------------------------
+
+      # ========================================
+      # 12. Build APK
+      # ========================================
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           set -e
 
-          echo "Starting Buildozer Android build..."
+          echo "========================================"
+          echo "Starting Frahoosh Android build"
+          echo "========================================"
+
+          echo "Android SDK:"
+          echo "$ANDROID_HOME"
+
+          echo ""
+          echo "sdkmanager:"
+          echo "$SDKMANAGER"
+
+          echo ""
+          echo "Java:"
+          java -version
+
+          echo ""
+          echo "Python:"
+          python --version
+
+          echo ""
+          echo "Buildozer:"
+          buildozer --version
+
+          echo ""
+          echo "========================================"
+          echo "Build APK"
+          echo "========================================"
 
           buildozer android debug
 
 
-      # --------------------------------
-      # 12. Check APK
-      # --------------------------------
+      # ========================================
+      # 13. Check APK
+      # ========================================
       - name: Check APK
         run: |
           set -e
 
-          echo "Generated APK files:"
+          echo "========================================"
+          echo "Generated APK files"
+          echo "========================================"
+
           ls -lah bin/
 
           echo ""
           echo "APK count:"
-          find bin -maxdepth 1 -type f -name "*.apk" | wc -l
 
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+          APK_COUNT="$(
+            find bin \
+              -maxdepth 1 \
+              -type f \
+              -name "*.apk" \
+              | wc -l
+          )"
+
+          echo "$APK_COUNT"
 
           if [ "$APK_COUNT" -eq 0 ]; then
             echo "ERROR: No APK generated."
             exit 1
           fi
 
-          echo "APK successfully generated."
+          echo ""
+          echo "========================================"
+          echo "APK successfully generated"
+          echo "========================================"
+
+          find bin \
+            -maxdepth 1 \
+            -type f \
+            -name "*.apk" \
+            -exec ls -lh {} \;
 
 
-      # --------------------------------
-      # 13. Upload APK
-      # --------------------------------
+      # ========================================
+      # 14. Upload APK
+      # ========================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
