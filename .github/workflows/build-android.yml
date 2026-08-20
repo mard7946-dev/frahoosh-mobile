@@ -12,16 +12,25 @@ jobs:
 
     steps:
 
+      # --------------------------------
+      # 1. Checkout
+      # --------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
 
+      # --------------------------------
+      # 2. Python 3.11
+      # --------------------------------
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
 
+      # --------------------------------
+      # 3. Java 17
+      # --------------------------------
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -29,6 +38,9 @@ jobs:
           java-version: "17"
 
 
+      # --------------------------------
+      # 4. System dependencies
+      # --------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -41,6 +53,7 @@ jobs:
             autoconf \
             automake \
             libtool \
+            libltdl-dev \
             pkg-config \
             zlib1g-dev \
             libncurses5-dev \
@@ -50,30 +63,100 @@ jobs:
             libssl-dev
 
 
+      # --------------------------------
+      # 5. Install Buildozer
+      # --------------------------------
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          pip install buildozer
+
+          pip install "buildozer==1.5.0"
+
           pip install "cython==0.29.36"
 
 
-      - name: Clean Buildozer
+      # --------------------------------
+      # 6. Verify versions
+      # --------------------------------
+      - name: Verify build environment
+        run: |
+          python --version
+          pip --version
+          buildozer --version
+          cython --version
+
+
+      # --------------------------------
+      # 7. Clean Buildozer cache
+      # --------------------------------
+      - name: Clean Buildozer cache
         run: |
           rm -rf .buildozer
           rm -rf bin
 
 
+      # --------------------------------
+      # 8. Accept Android licenses
+      # --------------------------------
+      - name: Accept Android SDK licenses
+        run: |
+          export ANDROID_HOME="/usr/local/lib/android/sdk"
+          export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          if [ -d "$ANDROID_HOME/cmdline-tools" ]; then
+            find "$ANDROID_HOME/cmdline-tools" \
+              -type f \
+              -name sdkmanager \
+              -print
+          fi
+
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f \
+            -name sdkmanager \
+            2>/dev/null | head -n 1 || true)
+
+          if [ -n "$SDKMANAGER" ]; then
+            chmod +x "$SDKMANAGER"
+
+            yes | "$SDKMANAGER" --licenses || true
+
+            "$SDKMANAGER" \
+              "platform-tools" \
+              "platforms;android-35" \
+              "build-tools;35.0.0" || true
+
+            yes | "$SDKMANAGER" --licenses || true
+          else
+            echo "sdkmanager not found in system SDK."
+          fi
+
+
+      # --------------------------------
+      # 9. Build APK
+      # --------------------------------
       - name: Build APK
         run: |
-          buildozer android debug
+          yes | buildozer android debug
 
 
+      # --------------------------------
+      # 10. Check APK
+      # --------------------------------
       - name: Check APK
         run: |
           echo "Generated APK files:"
           ls -lah bin/
 
+          echo "APK verification:"
+          find bin -maxdepth 1 -type f -name "*.apk" -print
 
+
+      # --------------------------------
+      # 11. Upload APK
+      # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
