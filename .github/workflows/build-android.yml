@@ -79,40 +79,31 @@ jobs:
 
 
       # ==========================================
-      # 6. Verify Python environment
+      # 6. Verify environment
       # ==========================================
-      - name: Verify Python environment
+      - name: Verify environment
         run: |
-          echo "================================"
-          echo "Python:"
+          echo "========== PYTHON =========="
           python --version
           which python
 
-          echo "================================"
-          echo "Cython:"
+          echo "========== CYTHON =========="
           cython --version
 
-          echo "================================"
-          echo "Buildozer:"
+          echo "========== BUILDOZER =========="
           buildozer version
 
-          echo "================================"
-          echo "Java:"
+          echo "========== JAVA =========="
           java -version
 
 
       # ==========================================
-      # 7. Clean Buildozer data
+      # 7. Clean project build data
       # ==========================================
-      # DO NOT run "buildozer android clean".
-      # python-for-android does not exist yet
-      # on a fresh runner.
-      # ==========================================
-      - name: Clean Buildozer data
+      - name: Clean project build data
         run: |
           rm -rf .buildozer
           rm -rf bin
-
           mkdir -p bin
 
 
@@ -122,6 +113,7 @@ jobs:
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
+          P4A_RELEASE: "0"
         run: |
           buildozer -v android debug
 
@@ -131,15 +123,11 @@ jobs:
       # ==========================================
       - name: Check APK
         run: |
-          echo "================================"
-          echo "Generated APK files:"
-          echo "================================"
+          echo "========== APK FILES =========="
 
           ls -lah bin/
 
-          echo "================================"
-          echo "APK count:"
-          echo "================================"
+          echo "========== APK COUNT =========="
 
           find bin \
             -maxdepth 1 \
