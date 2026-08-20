@@ -21,7 +21,6 @@ android.api = 33
 android.minapi = 24
 
 android.ndk = 28c
-android.ndk_api = 24
 
 android.archs = arm64-v8a
 
