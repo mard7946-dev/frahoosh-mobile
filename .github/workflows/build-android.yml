@@ -11,23 +11,28 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
+
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Install system dependencies
+
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
+
           sudo apt-get install -y \
             git \
             zip \
@@ -37,135 +42,129 @@ jobs:
             automake \
             libtool \
             pkg-config \
+            cmake \
+            build-essential \
+            libffi-dev \
+            libssl-dev \
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            ccache \
             libltdl-dev \
-            build-essential
+            ccache
 
-      - name: Install Buildozer
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-          python -m pip install buildozer
-          python -m pip install "cython==0.29.36"
 
-          echo "Buildozer:"
-          buildozer --version
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-          echo "Cython:"
-          cython --version
-
-      - name: Configure Android environment
-        run: |
-          SDK="/usr/local/lib/android/sdk"
-
-          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
-
-          echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
-          echo "ANDROIDAPI=35" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=23" >> "$GITHUB_ENV"
-
-          echo "SDK: $SDK"
-
-          test -f "$SDK/cmdline-tools/latest/bin/sdkmanager"
-
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
 
       - name: Install Android SDK components
         run: |
           set -e
 
-          SDK="$ANDROID_HOME"
-          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
-
           echo "Accepting Android SDK licenses..."
 
-          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          yes | sdkmanager --licenses || true
 
-          echo "Installing Android SDK packages..."
+          echo "Installing Android SDK components..."
 
-          "$SDKMANAGER" \
+          sdkmanager \
             "platform-tools" \
-            "platforms;android-35" \
+            "platforms;android-33" \
             "build-tools;35.0.0"
 
-          echo "Checking SDK..."
+          echo "Android SDK installation completed."
 
-          test -d "$SDK/platforms/android-35"
-          test -d "$SDK/build-tools/35.0.0"
-          test -f "$SDK/build-tools/35.0.0/aidl"
+          echo "Installed platforms:"
+          ls -la "$ANDROID_HOME/platforms"
 
-          echo "SDK installation OK."
+          echo "Installed build tools:"
+          ls -la "$ANDROID_HOME/build-tools"
 
-      - name: Create Buildozer sdkmanager wrapper
+
+      - name: Configure Android environment
         run: |
           set -e
 
-          SDK="$ANDROID_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
 
-          echo "Creating legacy tools/bin directory..."
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
-          sudo mkdir -p "$SDK/tools/bin"
+          echo "Android SDK:"
+          echo "$ANDROID_HOME"
 
-          echo "Creating sdkmanager wrapper..."
-
-          sudo tee "$SDK/tools/bin/sdkmanager" > /dev/null <<'EOF'
-#!/bin/bash
-exec /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "$@"
-EOF
-
-          sudo chmod +x "$SDK/tools/bin/sdkmanager"
-
-          echo "Testing Buildozer sdkmanager..."
-
-          test -f "$SDK/tools/bin/sdkmanager"
-
-          "$SDK/tools/bin/sdkmanager" --version
-
-          echo "Buildozer sdkmanager OK."
-
-      - name: Verify Android tools
-        run: |
-          set -e
-
-          SDK="$ANDROID_HOME"
-
-          echo "Modern sdkmanager:"
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
-
-          echo "Buildozer sdkmanager:"
-          "$SDK/tools/bin/sdkmanager" --version
+          echo "SDK Manager:"
+          sdkmanager --version
 
           echo "ADB:"
-          "$SDK/platform-tools/adb" version
+          adb version
 
-          echo "AIDL:"
-          "$SDK/build-tools/35.0.0/aidl" --version
+
+      - name: Install Buildozer and Cython
+        run: |
+          set -e
+
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel
+
+          python -m pip install "Cython==0.29.36"
+          python -m pip install "buildozer==1.5.0"
+
+          echo "========================================"
+          echo "Buildozer"
+          echo "========================================"
+
+          buildozer --version
+
+          echo "========================================"
+          echo "Cython"
+          echo "========================================"
+
+          cython --version
+
 
       - name: Verify Frahoosh project
         run: |
           set -e
 
+          echo "========================================"
+          echo "Project verification"
+          echo "========================================"
+
           test -f buildozer.spec
           test -d mobile
+          test -f mobile/main.py
 
+          echo ""
           echo "buildozer.spec:"
           cat buildozer.spec
 
+          echo ""
           echo "Mobile files:"
           find mobile -maxdepth 4 -type f -print | sort
 
+          echo ""
+          echo "Python syntax check:"
+
+          python -m compileall -q mobile
+
+          echo "Project verification successful."
+
+
       - name: Clean Buildozer
         run: |
+          set -e
+
+          echo "Cleaning previous Buildozer files..."
+
           rm -rf .buildozer
           rm -rf bin
+
           mkdir -p bin
+
+          echo "Clean build directory ready."
+
 
       - name: Build APK
         env:
@@ -174,49 +173,87 @@ EOF
         run: |
           set -e
 
+          echo "========================================"
+          echo "Starting Frahoosh Android build"
+          echo "========================================"
+
+          echo ""
           echo "Python:"
           python --version
 
+          echo ""
           echo "Java:"
           java -version
 
+          echo ""
           echo "Buildozer:"
           buildozer --version
 
+          echo ""
           echo "Cython:"
           cython --version
 
+          echo ""
           echo "Android SDK:"
           echo "$ANDROID_HOME"
 
-          echo "sdkmanager:"
-          "$ANDROID_HOME/tools/bin/sdkmanager" --version
+          echo ""
+          echo "SDK Manager:"
+          sdkmanager --version
 
-          echo "Starting Buildozer..."
+          echo ""
+          echo "========================================"
+          echo "Running Buildozer"
+          echo "========================================"
 
-          buildozer android debug
+          yes | buildozer -v android debug
+
 
       - name: Check APK
         run: |
           set -e
 
-          echo "APK files:"
+          echo "========================================"
+          echo "Checking generated APK"
+          echo "========================================"
+
           ls -lah bin/
 
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+          APK="$(find bin -maxdepth 1 -type f -name '*.apk' | head -n 1)"
 
-          echo "APK count: $APK_COUNT"
-
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: No APK generated."
+          if [ -z "$APK" ]; then
+            echo "ERROR: No APK was generated."
             exit 1
           fi
 
-          echo "APK generated successfully."
+          echo ""
+          echo "APK found:"
+          echo "$APK"
+
+          echo ""
+          echo "APK size:"
+          ls -lh "$APK"
+
+
+      - name: Verify APK
+        run: |
+          set -e
+
+          APK="$(find bin -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+
+          test -n "$APK"
+
+          echo "Testing APK archive..."
+
+          unzip -t "$APK"
+
+          echo ""
+          echo "APK archive is valid."
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: frahoosh-apk
+          name: Frahoosh-Mobile-APK
           path: bin/*.apk
           if-no-files-found: error
