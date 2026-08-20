@@ -20,9 +20,9 @@ jobs:
 
 
       # --------------------------------
-      # 2. Python 3.11
+      # 2. Python 3.11.9
       # --------------------------------
-      - name: Setup Python 3.11
+      - name: Setup Python 3.11.9
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
@@ -71,13 +71,34 @@ jobs:
       # --------------------------------
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           python -m pip install buildozer
           python -m pip install "cython==0.29.36"
 
 
       # --------------------------------
-      # 6. Clean Buildozer cache
+      # 6. Android environment
+      # --------------------------------
+      - name: Configure Android environment
+        run: |
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+
+
+      # --------------------------------
+      # 7. Accept SDK licenses
+      # --------------------------------
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p "$HOME/.buildozer/android/platform"
+
+          if [ -x "/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          fi
+
+
+      # --------------------------------
+      # 8. Clean old build data
       # --------------------------------
       - name: Clean Buildozer
         run: |
@@ -87,18 +108,17 @@ jobs:
 
 
       # --------------------------------
-      # 7. Build APK
+      # 9. Build APK
       # --------------------------------
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
         run: |
-          buildozer android clean
           buildozer android debug
 
 
       # --------------------------------
-      # 8. Check APK
+      # 10. Check APK
       # --------------------------------
       - name: Check APK
         run: |
@@ -110,7 +130,7 @@ jobs:
 
 
       # --------------------------------
-      # 9. Upload APK
+      # 11. Upload APK
       # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
