@@ -54,48 +54,69 @@ jobs:
           python -m pip install "Cython==0.29.36"
           python -m pip install buildozer
 
-          echo "Python:"
+          echo "========================================"
+          echo "Python"
+          echo "========================================"
           python --version
 
-          echo "Cython:"
+          echo "========================================"
+          echo "Cython"
+          echo "========================================"
           cython --version
 
-          echo "Buildozer:"
+          echo "========================================"
+          echo "Buildozer"
+          echo "========================================"
           buildozer --version
 
-      - name: Verify project
+      - name: Verify Frahoosh project
         run: |
           set -e
 
-          echo "Project:"
+          echo "========================================"
+          echo "PROJECT"
+          echo "========================================"
+
           pwd
 
-          echo "buildozer.spec:"
+          echo ""
+          echo "Checking buildozer.spec..."
           test -f buildozer.spec
-          cat buildozer.spec
+          echo "buildozer.spec found."
 
-          echo "mobile directory:"
+          echo ""
+          echo "Checking mobile directory..."
           test -d mobile
+          echo "mobile directory found."
 
-          echo "main.py:"
+          echo ""
+          echo "Checking main.py..."
           test -f mobile/main.py
+          echo "mobile/main.py found."
 
-          echo "Python syntax:"
+          echo ""
+          echo "Checking Python syntax..."
           python -m compileall -q mobile
+          echo "Python syntax OK."
 
-          echo "Mobile files:"
+          echo ""
+          echo "Frahoosh mobile files:"
           find mobile -type f \
             ! -path "*/__pycache__/*" \
             | sort
 
-      - name: Clean previous build
+      - name: Clean Buildozer
         run: |
           set -e
+
+          echo "Cleaning previous Buildozer files..."
 
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
+
+          echo "Clean build environment ready."
 
       - name: Build APK
         env:
@@ -108,35 +129,44 @@ jobs:
           echo "BUILDING FRAHOOSH APK"
           echo "========================================"
 
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
       - name: Verify APK
         run: |
           set -e
 
           echo "========================================"
-          echo "VERIFY APK"
+          echo "VERIFYING APK"
           echo "========================================"
 
+          echo ""
+          echo "Contents of bin:"
           ls -lah bin/
+
+          echo ""
+          echo "Searching for APK..."
 
           APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
 
           echo "APK count: $APK_COUNT"
 
           if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: APK was not generated."
+            echo ""
+            echo "ERROR: No APK was generated."
             exit 1
           fi
 
           APK=$(find bin -maxdepth 1 -type f -name "*.apk" | head -n 1)
 
-          echo "APK:"
+          echo ""
+          echo "APK successfully generated:"
           echo "$APK"
 
+          echo ""
           echo "APK size:"
           ls -lh "$APK"
 
+          echo ""
           echo "APK SHA256:"
           sha256sum "$APK"
 
