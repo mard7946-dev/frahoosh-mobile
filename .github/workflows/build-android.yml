@@ -64,28 +64,42 @@ jobs:
 
 
       # --------------------------------
-      # 5. Install Buildozer
+      # 5. Install Buildozer + Cython
       # --------------------------------
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip setuptools wheel
+
           pip install buildozer
+
           pip install "cython==0.29.36"
 
+          echo "Buildozer version:"
+          buildozer --version
+
+          echo "Cython version:"
+          cython --version
+
 
       # --------------------------------
-      # 6. Configure Android environment
+      # 6. Configure Android SDK
       # --------------------------------
-      - name: Configure Android environment
+      - name: Configure Android SDK
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          SDK="/usr/local/lib/android/sdk"
 
-          echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROIDNDK=/home/runner/.buildozer/android/platform/android-ndk-r28c" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
 
           echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
           echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+
+          echo "ANDROID SDK:"
+          echo "$SDK"
+
+          echo "SDK contents:"
+          ls -lah "$SDK" || true
 
 
       # --------------------------------
@@ -95,10 +109,22 @@ jobs:
         run: |
           SDK="$ANDROID_HOME"
 
-          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          mkdir -p "$SDK/licenses"
 
-          echo "SDK: $SDK"
-          echo "SDK Manager: $SDKMANAGER"
+          cat > "$SDK/licenses/android-sdk-license" <<'EOF'
+          8933bad161af4178b1185d1a37fbf41ea5269c55
+          d56f5187479451eabf01fb78af6dfcb131a6481e
+          24333f8a63b6825ea9c5514f83c2829b004d1fee
+          EOF
+
+          cat > "$SDK/licenses/android-sdk-preview-license" <<'EOF'
+          84831b9409646a918e30573bab4c9c91346d8abd
+          EOF
+
+          echo "Android SDK licenses:"
+          ls -lah "$SDK/licenses"
+
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
 
           if [ ! -x "$SDKMANAGER" ]; then
             echo "ERROR: sdkmanager not found:"
@@ -106,25 +132,77 @@ jobs:
             exit 1
           fi
 
+          echo "sdkmanager:"
+          "$SDKMANAGER" --version
+
+          echo "Checking licenses:"
           yes | "$SDKMANAGER" --licenses || true
+
+
+      # --------------------------------
+      # 8. Install required Android SDK
+      # --------------------------------
+      - name: Install Android SDK packages
+        run: |
+          SDK="$ANDROID_HOME"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+
+          echo "Installing required SDK packages..."
 
           "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-33" \
-            "build-tools;35.0.0"
+            "build-tools;37.0.0"
+
+          echo
+          echo "Installed Android platforms:"
+          ls -lah "$SDK/platforms" || true
+
+          echo
+          echo "Installed Build Tools:"
+          ls -lah "$SDK/build-tools" || true
+
+          echo
+          echo "AIDL:"
+          ls -lah "$SDK/build-tools/37.0.0/aidl"
+
+          test -x "$SDK/build-tools/37.0.0/aidl"
+
+          echo
+          echo "AIDL executable test:"
+          "$SDK/build-tools/37.0.0/aidl" || test $? -eq 1
 
 
       # --------------------------------
-      # 8. Clean Buildozer
+      # 9. Configure Buildozer SDK path
+      # --------------------------------
+      - name: Configure Buildozer paths
+        run: |
+          SDK="$ANDROID_HOME"
+
+          echo "Using Android SDK:"
+          echo "$SDK"
+
+          test -d "$SDK"
+          test -d "$SDK/platforms/android-33"
+          test -d "$SDK/build-tools/37.0.0"
+
+          echo "Android SDK is ready."
+
+
+      # --------------------------------
+      # 10. Clean previous build data
       # --------------------------------
       - name: Clean Buildozer
         run: |
           rm -rf .buildozer
           rm -rf bin
 
+          echo "Build directories cleaned."
+
 
       # --------------------------------
-      # 9. Build APK
+      # 11. Build APK
       # --------------------------------
       - name: Build APK
         env:
@@ -134,19 +212,27 @@ jobs:
 
 
       # --------------------------------
-      # 10. Check APK
+      # 12. Check APK
       # --------------------------------
       - name: Check APK
         run: |
           echo "Generated APK files:"
           ls -lah bin/
 
+          echo
           echo "APK count:"
-          find bin -maxdepth 1 -type f -name "*.apk" | wc -l
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+
+          echo "$APK_COUNT"
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: No APK was generated."
+            exit 1
+          fi
 
 
       # --------------------------------
-      # 11. Upload APK
+      # 13. Upload APK
       # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
