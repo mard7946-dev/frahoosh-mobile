@@ -12,25 +12,16 @@ jobs:
 
     steps:
 
-      # --------------------------------
-      # 1. Checkout
-      # --------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
 
-      # --------------------------------
-      # 2. Python 3.11
-      # --------------------------------
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
 
-      # --------------------------------
-      # 3. Java 17
-      # --------------------------------
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -38,9 +29,6 @@ jobs:
           java-version: "17"
 
 
-      # --------------------------------
-      # 4. System dependencies
-      # --------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -62,9 +50,6 @@ jobs:
             libssl-dev
 
 
-      # --------------------------------
-      # 5. Install Buildozer
-      # --------------------------------
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
@@ -72,95 +57,23 @@ jobs:
           pip install "cython==0.29.36"
 
 
-      # --------------------------------
-      # 6. Prepare Buildozer SDK
-      # --------------------------------
-      - name: Prepare Buildozer Android SDK
-        run: |
-          mkdir -p "$HOME/.buildozer/android/platform"
-
-          echo "Buildozer directory:"
-          ls -la "$HOME/.buildozer/android/platform" || true
-
-          echo "Running Buildozer once to initialize Android tools..."
-
-          buildozer android debug 2>&1 | tee /tmp/buildozer-init.log || true
-
-          echo "Checking Buildozer Android SDK..."
-
-          if [ -d "$HOME/.buildozer/android/platform/android-sdk" ]; then
-            echo "Buildozer Android SDK found."
-            ls -la "$HOME/.buildozer/android/platform/android-sdk"
-          else
-            echo "Buildozer Android SDK not found yet."
-          fi
-
-
-      # --------------------------------
-      # 7. Accept Buildozer SDK licenses
-      # --------------------------------
-      - name: Accept Buildozer Android SDK licenses
-        run: |
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-
-          echo "Using SDK:"
-          echo "$SDK"
-
-          if [ -d "$SDK/cmdline-tools" ]; then
-            echo "Searching for sdkmanager..."
-
-            SDKMANAGER=$(find "$SDK/cmdline-tools" -type f -name sdkmanager | head -n 1 || true)
-
-            if [ -n "$SDKMANAGER" ]; then
-              echo "Found sdkmanager:"
-              echo "$SDKMANAGER"
-
-              chmod +x "$SDKMANAGER"
-
-              yes | "$SDKMANAGER" --licenses || true
-
-              "$SDKMANAGER" \
-                "platform-tools" \
-                "build-tools;37.0.0" \
-                "platforms;android-35" || true
-
-              yes | "$SDKMANAGER" --licenses || true
-            else
-              echo "sdkmanager was not found inside Buildozer SDK."
-            fi
-          else
-            echo "Buildozer cmdline-tools directory does not exist yet."
-          fi
-
-
-      # --------------------------------
-      # 8. Clean old build
-      # --------------------------------
       - name: Clean Buildozer
         run: |
+          rm -rf .buildozer
           rm -rf bin
 
 
-      # --------------------------------
-      # 9. Build APK
-      # --------------------------------
       - name: Build APK
         run: |
           buildozer android debug
 
 
-      # --------------------------------
-      # 10. Check APK
-      # --------------------------------
       - name: Check APK
         run: |
           echo "Generated APK files:"
           ls -lah bin/
 
 
-      # --------------------------------
-      # 11. Upload APK
-      # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
