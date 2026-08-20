@@ -12,42 +12,23 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-
-      # ============================================================
-      # 1. Checkout
-      # ============================================================
       - name: Checkout
         uses: actions/checkout@v4
 
-
-      # ============================================================
-      # 2. Python
-      # ============================================================
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-
-      # ============================================================
-      # 3. Java 17
-      # ============================================================
       - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-
-      # ============================================================
-      # 4. Linux dependencies
-      # ============================================================
       - name: Install system dependencies
         run: |
-          set -e
-
           sudo apt-get update
-
           sudo apt-get install -y \
             git \
             zip \
@@ -67,172 +48,90 @@ jobs:
             libltdl-dev \
             build-essential
 
-
-      # ============================================================
-      # 5. Buildozer + Cython
-      # ============================================================
       - name: Install Buildozer
         run: |
-          set -e
-
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
-
           python -m pip install buildozer
-
           python -m pip install "cython==0.29.36"
 
-          echo "========================================"
-          echo "Buildozer version"
-          echo "========================================"
+          echo "Buildozer:"
           buildozer --version
 
-          echo "========================================"
-          echo "Cython version"
-          echo "========================================"
+          echo "Cython:"
           cython --version
 
-
-      # ============================================================
-      # 6. Android SDK environment
-      # ============================================================
       - name: Configure Android SDK
         run: |
           set -e
 
           SDK="/usr/local/lib/android/sdk"
 
+          test -d "$SDK"
+          test -f "$SDK/cmdline-tools/latest/bin/sdkmanager"
+
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
-          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
           echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
 
-          echo "========================================"
-          echo "Android SDK"
-          echo "========================================"
-
-          test -d "$SDK"
-
-          echo "SDK:"
+          echo "Android SDK:"
           echo "$SDK"
 
-          echo ""
-          echo "Modern sdkmanager:"
-          test -f "$SDK/cmdline-tools/latest/bin/sdkmanager"
+          echo "sdkmanager:"
           "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
 
-
-      # ============================================================
-      # 7. Create Buildozer legacy SDK compatibility path
-      #
-      # Buildozer used by this project looks for:
-      #
-      #   $SDK/tools/bin/sdkmanager
-      #
-      # Modern Android SDK provides:
-      #
-      #   $SDK/cmdline-tools/latest/bin/sdkmanager
-      #
-      # Instead of modifying Buildozer source code, create a real
-      # compatibility path inside the existing SDK.
-      # ============================================================
-      - name: Prepare SDK compatibility path
-        run: |
-          set -e
-
-          SDK="$ANDROID_HOME"
-          MODERN="$SDK/cmdline-tools/latest"
-
-          echo "========================================"
-          echo "Preparing SDK compatibility path"
-          echo "========================================"
-
-          test -d "$MODERN"
-          test -f "$MODERN/bin/sdkmanager"
-
-          echo "Removing old compatibility path if present..."
-
-          if [ -e "$SDK/tools" ] || [ -L "$SDK/tools" ]; then
-            rm -rf "$SDK/tools"
-          fi
-
-          echo "Creating:"
-          echo "$SDK/tools -> $MODERN"
-
-          ln -s "$MODERN" "$SDK/tools"
-
-          echo ""
-          echo "Checking legacy path..."
-
-          test -f "$SDK/tools/bin/sdkmanager"
-
-          echo ""
-          echo "Legacy sdkmanager:"
-          "$SDK/tools/bin/sdkmanager" --version
-
-
-      # ============================================================
-      # 8. Accept licenses and install exact SDK components
-      # ============================================================
       - name: Install Android SDK components
         run: |
           set -e
 
           SDK="$ANDROID_HOME"
-          SDKMANAGER="$SDK/tools/bin/sdkmanager"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
 
-          echo "========================================"
-          echo "Android SDK installation"
-          echo "========================================"
-
-          test -f "$SDKMANAGER"
-
-          echo "sdkmanager:"
-          "$SDKMANAGER" --version
-
-          echo ""
           echo "Accepting Android SDK licenses..."
 
           yes | "$SDKMANAGER" --licenses > /dev/null || true
 
-          echo ""
-          echo "Installing required Android packages..."
+          echo "Installing Android SDK packages..."
 
           "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-          echo ""
-          echo "Installed platforms:"
-          find "$SDK/platforms" -maxdepth 1 -mindepth 1 -type d -print | sort || true
+          echo "Checking SDK..."
 
-          echo ""
-          echo "Installed build-tools:"
-          find "$SDK/build-tools" -maxdepth 1 -mindepth 1 -type d -print | sort || true
+          test -d "$SDK/platforms/android-35"
+          test -d "$SDK/build-tools/35.0.0"
+          test -f "$SDK/build-tools/35.0.0/aidl"
 
-          echo ""
-          echo "AIDL:"
-          test -x "$SDK/build-tools/35.0.0/aidl"
-          "$SDK/build-tools/35.0.0/aidl" 2>&1 || true
+          echo "SDK is ready."
 
-
-      # ============================================================
-      # 9. Tell Buildozer to use GitHub's preinstalled SDK
-      #
-      # IMPORTANT:
-      # We do NOT patch buildozer/targets/android.py anymore.
-      # ============================================================
-      - name: Configure buildozer.spec SDK path
+      - name: Prepare Buildozer SDK compatibility
         run: |
           set -e
 
           SDK="$ANDROID_HOME"
 
-          echo "========================================"
-          echo "Configuring buildozer.spec"
-          echo "========================================"
+          echo "Preparing Buildozer SDK compatibility path..."
+
+          if [ -e "$SDK/tools" ] || [ -L "$SDK/tools" ]; then
+            rm -rf "$SDK/tools"
+          fi
+
+          ln -s "$SDK/cmdline-tools/latest" "$SDK/tools"
+
+          test -f "$SDK/tools/bin/sdkmanager"
+
+          echo "Compatibility sdkmanager:"
+          "$SDK/tools/bin/sdkmanager" --version
+
+      - name: Configure buildozer.spec
+        run: |
+          set -e
+
+          SDK="$ANDROID_HOME"
 
           python - "$SDK" <<'PY'
           import sys
@@ -245,22 +144,14 @@ jobs:
 
           lines = text.splitlines()
 
-          # Remove previous android.sdk_path entries.
-          filtered = []
+          # Remove old android.sdk_path entries.
+          lines = [
+              line
+              for line in lines
+              if not line.strip().startswith("android.sdk_path")
+          ]
 
-          for line in lines:
-              stripped = line.strip()
-
-              if stripped.startswith("android.sdk_path"):
-                  continue
-
-              filtered.append(line)
-
-          text = "\n".join(filtered) + "\n"
-
-          # Find [app] section and insert SDK path there.
-          lines = text.splitlines()
-
+          # Insert android.sdk_path into [app].
           result = []
           inserted = False
 
@@ -268,13 +159,11 @@ jobs:
               result.append(line)
 
               if line.strip() == "[app]" and not inserted:
-                  result.append(
-                      "android.sdk_path = " + sdk
-                  )
+                  result.append(f"android.sdk_path = {sdk}")
                   inserted = True
 
           if not inserted:
-              raise SystemExit("ERROR: [app] section not found in buildozer.spec")
+              raise SystemExit("ERROR: [app] section not found")
 
           path.write_text("\n".join(result) + "\n")
 
@@ -282,112 +171,67 @@ jobs:
           print(sdk)
           PY
 
-          echo ""
-          echo "Current SDK configuration:"
+          echo "Configured buildozer.spec:"
           grep -n "android.sdk_path" buildozer.spec
 
-          echo ""
-          echo "Buildozer spec:"
-          cat buildozer.spec
-
-
-      # ============================================================
-      # 10. Verify project
-      # ============================================================
-      - name: Verify Frahoosh project
+      - name: Verify project
         run: |
           set -e
 
-          echo "========================================"
-          echo "Frahoosh project"
-          echo "========================================"
-
-          echo ""
-          echo "Root:"
+          echo "Project:"
           pwd
-
-          echo ""
-          echo "Files:"
-          find . -maxdepth 2 -type f \
-            ! -path "./.git/*" \
-            ! -path "./.buildozer/*" \
-            | sort
-
-          echo ""
-          echo "Mobile:"
-          find mobile -maxdepth 4 -type f -print | sort
 
           echo ""
           echo "buildozer.spec:"
           cat buildozer.spec
 
+          echo ""
+          echo "Mobile files:"
+          find mobile -maxdepth 4 -type f -print | sort
 
-      # ============================================================
-      # 11. Clean old Buildozer cache
-      # ============================================================
       - name: Clean Buildozer
         run: |
           set -e
-
-          echo "Cleaning old Buildozer state..."
 
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
 
-          echo "Clean complete."
-
-
-      # ============================================================
-      # 12. Verify Buildozer sees the correct SDK
-      # ============================================================
-      - name: Verify Buildozer SDK configuration
+      - name: Verify Android environment
         run: |
           set -e
 
-          SDK="$ANDROID_HOME"
-
           echo "========================================"
-          echo "Final SDK verification"
+          echo "ANDROID ENVIRONMENT"
           echo "========================================"
 
-          echo ""
           echo "ANDROID_HOME:"
           echo "$ANDROID_HOME"
 
           echo ""
-          echo "ANDROID_SDK_ROOT:"
-          echo "$ANDROID_SDK_ROOT"
-
-          echo ""
           echo "Modern sdkmanager:"
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
 
           echo ""
-          echo "Legacy compatibility sdkmanager:"
-          "$SDK/tools/bin/sdkmanager" --version
+          echo "Buildozer compatibility sdkmanager:"
+          "$ANDROID_HOME/tools/bin/sdkmanager" --version
 
           echo ""
-          echo "Platform:"
-          test -d "$SDK/platforms/android-35"
+          echo "Android platform:"
+          test -d "$ANDROID_HOME/platforms/android-35"
 
           echo ""
-          echo "Build tools:"
-          test -d "$SDK/build-tools/35.0.0"
+          echo "Android build-tools:"
+          test -d "$ANDROID_HOME/build-tools/35.0.0"
 
           echo ""
           echo "AIDL:"
-          test -f "$SDK/build-tools/35.0.0/aidl"
+          test -f "$ANDROID_HOME/build-tools/35.0.0/aidl"
 
           echo ""
-          echo "buildozer.spec SDK:"
-          grep "android.sdk_path" buildozer.spec
+          echo "Everything ready."
 
-
-      # ============================================================
-      # 13. Build APK
-      # ============================================================
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
@@ -396,46 +240,33 @@ jobs:
           set -e
 
           echo "========================================"
-          echo "Starting Frahoosh Android build"
+          echo "BUILDING FRAHOOSH APK"
           echo "========================================"
 
           buildozer android debug
 
-
-      # ============================================================
-      # 14. Check APK
-      # ============================================================
       - name: Check APK
         run: |
           set -e
 
           echo "========================================"
-          echo "APK result"
+          echo "APK RESULT"
           echo "========================================"
 
-          if ! find bin -maxdepth 1 -type f -name "*.apk" | grep -q .; then
-            echo "ERROR: No APK was generated."
-            echo ""
-            echo "Contents of bin:"
+          find bin -maxdepth 1 -type f -name "*.apk" -print
+
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: APK was not generated."
             ls -lah bin || true
             exit 1
           fi
 
           echo ""
-          echo "Generated APK:"
+          echo "APK generated successfully:"
           ls -lah bin/*.apk
 
-          echo ""
-          echo "APK count:"
-          find bin -maxdepth 1 -type f -name "*.apk" | wc -l
-
-          echo ""
-          echo "APK successfully generated."
-
-
-      # ============================================================
-      # 15. Upload APK
-      # ============================================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
