@@ -12,35 +12,35 @@ jobs:
 
     steps:
 
-      # ==========================================
+      # --------------------------------
       # 1. Checkout
-      # ==========================================
+      # --------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
 
-      # ==========================================
+      # --------------------------------
       # 2. Python 3.11.9
-      # ==========================================
+      # --------------------------------
       - name: Setup Python 3.11.9
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
 
 
-      # ==========================================
+      # --------------------------------
       # 3. Java 17
-      # ==========================================
+      # --------------------------------
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
 
-      # ==========================================
+      # --------------------------------
       # 4. System dependencies
-      # ==========================================
+      # --------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -66,68 +66,163 @@ jobs:
             ccache
 
 
-      # ==========================================
-      # 5. Install Buildozer
-      # ==========================================
+      # --------------------------------
+      # 5. Configure Android SDK
+      # --------------------------------
+      - name: Configure Android SDK
+        run: |
+
+          SDK="/usr/local/lib/android/sdk"
+
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
+
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+          echo "Android SDK:"
+          ls -lah "$SDK"
+
+          echo "SDK manager:"
+          ls -lah "$SDK/cmdline-tools/latest/bin/" || true
+
+
+      # --------------------------------
+      # 6. Install Android SDK packages
+      # --------------------------------
+      - name: Install Android SDK packages
+        run: |
+
+          SDK="/usr/local/lib/android/sdk"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+
+          echo "Using:"
+          echo "$SDKMANAGER"
+
+          chmod +x "$SDKMANAGER" || true
+
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses || true
+
+          "$SDKMANAGER" --sdk_root="$SDK" \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;37.0.0"
+
+          echo "Installed build tools:"
+          ls -lah "$SDK/build-tools"
+
+          echo "Installed platforms:"
+          ls -lah "$SDK/platforms"
+
+
+      # --------------------------------
+      # 7. Verify AIDL
+      # --------------------------------
+      - name: Verify Android tools
+        run: |
+
+          SDK="/usr/local/lib/android/sdk"
+
+          echo "Checking AIDL..."
+
+          if [ -x "$SDK/build-tools/37.0.0/aidl" ]; then
+            echo "AIDL FOUND"
+            "$SDK/build-tools/37.0.0/aidl" --version
+          else
+            echo "ERROR: AIDL NOT FOUND"
+            find "$SDK/build-tools" -maxdepth 2 -type f -name aidl -print || true
+            exit 1
+          fi
+
+
+      # --------------------------------
+      # 8. Install Buildozer
+      # --------------------------------
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install "setuptools<70"
-          python -m pip install wheel
-          python -m pip install "cython==0.29.36"
+
+          python -m pip install --upgrade pip setuptools wheel
+
           python -m pip install buildozer
 
+          python -m pip install "cython==0.29.36"
 
-      # ==========================================
-      # 6. Verify environment
-      # ==========================================
-      - name: Verify environment
-        run: |
-          echo "========== PYTHON =========="
+          echo "Python:"
           python --version
-          which python
 
-          echo "========== CYTHON =========="
+          echo "Cython:"
           cython --version
 
-          echo "========== BUILDOZER =========="
-          buildozer version
-
-          echo "========== JAVA =========="
-          java -version
+          echo "Buildozer:"
+          buildozer --version
 
 
-      # ==========================================
-      # 7. Clean project build data
-      # ==========================================
-      - name: Clean project build data
+      # --------------------------------
+      # 9. Configure Buildozer Android
+      # --------------------------------
+      - name: Configure Buildozer Android
         run: |
+
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+
+          echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+
+          echo "Android SDK environment:"
+          echo "ANDROIDSDK=/usr/local/lib/android/sdk"
+          echo "ANDROIDAPI=33"
+          echo "ANDROIDMINAPI=24"
+
+
+      # --------------------------------
+      # 10. Clean previous build
+      # --------------------------------
+      - name: Clean previous build
+        run: |
+
           rm -rf .buildozer
           rm -rf bin
-          mkdir -p bin
+
+          echo "Project build directories cleaned."
 
 
-      # ==========================================
-      # 8. Build APK
-      # ==========================================
+      # --------------------------------
+      # 11. Build APK
+      # --------------------------------
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
-          P4A_RELEASE: "0"
         run: |
-          buildozer -v android debug
+
+          export ANDROIDSDK="/usr/local/lib/android/sdk"
+          export ANDROID_HOME="/usr/local/lib/android/sdk"
+          export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+
+          export ANDROIDAPI="33"
+          export ANDROIDMINAPI="24"
+
+          echo "Final Android environment:"
+          echo "ANDROIDSDK=$ANDROIDSDK"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROIDAPI=$ANDROIDAPI"
+          echo "ANDROIDMINAPI=$ANDROIDMINAPI"
+
+          buildozer android debug
 
 
-      # ==========================================
-      # 9. Check APK
-      # ==========================================
+      # --------------------------------
+      # 12. Check APK
+      # --------------------------------
       - name: Check APK
         run: |
-          echo "========== APK FILES =========="
+
+          echo "Generated APK files:"
 
           ls -lah bin/
 
-          echo "========== APK COUNT =========="
+          echo ""
+          echo "APK count:"
 
           find bin \
             -maxdepth 1 \
@@ -135,21 +230,17 @@ jobs:
             -name "*.apk" \
             -print
 
-          APK_COUNT=$(find bin \
-            -maxdepth 1 \
-            -type f \
-            -name "*.apk" \
-            | wc -l)
+          COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
 
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: No APK was generated."
+          if [ "$COUNT" -eq 0 ]; then
+            echo "ERROR: No APK generated."
             exit 1
           fi
 
 
-      # ==========================================
-      # 10. Upload APK
-      # ==========================================
+      # --------------------------------
+      # 13. Upload APK
+      # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
