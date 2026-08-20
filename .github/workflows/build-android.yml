@@ -12,35 +12,24 @@ jobs:
 
     steps:
 
-      # --------------------------------
       # 1. Checkout
-      # --------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
-
-      # --------------------------------
-      # 2. Python 3.11
-      # --------------------------------
+      # 2. Python
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-
-      # --------------------------------
-      # 3. Java 17
-      # --------------------------------
+      # 3. Java
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-
-      # --------------------------------
       # 4. System dependencies
-      # --------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -62,199 +51,122 @@ jobs:
             libssl-dev \
             ccache
 
+      # 5. Python build tools
+      - name: Install Buildozer and Cython
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install buildozer
+          python -m pip install "cython==0.29.36"
 
-      # --------------------------------
-      # 5. Configure Android SDK
-      # --------------------------------
+      # 6. Configure Android SDK
       - name: Configure Android SDK
         run: |
-
-          SDK="/usr/local/lib/android/sdk"
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
 
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
-
           echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
 
-          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+          echo "SDK=$SDK"
 
-          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          echo "Searching for sdkmanager..."
 
-          echo "Android SDK:"
-          echo "$SDK"
+          SDKMANAGER=""
 
-          echo "SDK contents:"
-          ls -lah "$SDK"
+          if [ -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          elif [ -x "$SDK/cmdline-tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK/cmdline-tools/bin/sdkmanager"
+          elif [ -x "$SDK/tools/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK/tools/bin/sdkmanager"
+          fi
 
-
-      # --------------------------------
-      # 6. Install exact Android SDK
-      # --------------------------------
-      - name: Install Android SDK components
-        run: |
-
-          SDK="/usr/local/lib/android/sdk"
-
-          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
-
-          echo "SDKMANAGER:"
-          echo "$SDKMANAGER"
-
-          if [ ! -x "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager was not found."
+            find "$SDK" -name sdkmanager -type f -print || true
             exit 1
           fi
 
+          echo "SDKMANAGER=$SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
+
+          "$SDKMANAGER" --version
+
+      # 7. Install exact Android SDK components
+      - name: Install Android SDK components
+        run: |
+          set -e
+
+          SDK="$ANDROID_HOME"
+          SDKMANAGER="$SDKMANAGER"
+
           echo "Accepting Android SDK licenses..."
 
-          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses > /dev/null || true
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses
 
           echo "Installing required SDK packages..."
 
           "$SDKMANAGER" --sdk_root="$SDK" \
             "platform-tools" \
             "platforms;android-33" \
-            "build-tools;35.0.0"
+            "build-tools;37.0.0"
 
-          echo "SDK packages installed."
+          echo "Installed build-tools:"
+          ls -la "$SDK/build-tools"
 
+          echo "Installed platforms:"
+          ls -la "$SDK/platforms"
 
-      # --------------------------------
-      # 7. Remove incompatible Build Tools
-      # --------------------------------
-      - name: Remove incompatible Build Tools
-        run: |
+          echo "Checking AIDL..."
 
-          SDK="/usr/local/lib/android/sdk"
-
-          echo "Installed Build Tools before cleanup:"
-          ls -lah "$SDK/build-tools" || true
-
-          if [ -d "$SDK/build-tools/37.0.0" ]; then
-            echo "Removing Build Tools 37.0.0..."
-            rm -rf "$SDK/build-tools/37.0.0"
-          fi
-
-          echo "Installed Build Tools after cleanup:"
-          ls -lah "$SDK/build-tools"
-
-
-      # --------------------------------
-      # 8. Verify AIDL
-      # --------------------------------
-      - name: Verify Android SDK
-        run: |
-
-          SDK="/usr/local/lib/android/sdk"
-
-          AIDL="$SDK/build-tools/35.0.0/aidl"
-
-          echo "Checking AIDL:"
-          echo "$AIDL"
+          AIDL="$SDK/build-tools/37.0.0/aidl"
 
           if [ ! -x "$AIDL" ]; then
-            echo "ERROR: AIDL was not installed."
+            echo "ERROR: AIDL was not installed:"
+            echo "$AIDL"
             exit 1
           fi
 
-          echo "AIDL FOUND"
+          echo "AIDL FOUND:"
+          "$AIDL" --help >/dev/null
 
-          "$AIDL" --help > /dev/null
+          echo "AIDL check passed."
 
-          echo "AIDL is working."
-
-
-      # --------------------------------
-      # 9. Install Buildozer
-      # --------------------------------
-      - name: Install Buildozer
+      # 8. Configure Android environment
+      - name: Configure Android environment
         run: |
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+          echo "NDKAPI=24" >> "$GITHUB_ENV"
 
-          python -m pip install --upgrade \
-            pip \
-            setuptools \
-            wheel
-
-          pip install buildozer
-
-          pip install "cython==0.29.36"
-
-
-      # --------------------------------
-      # 10. Verify Buildozer configuration
-      # --------------------------------
-      - name: Verify Buildozer configuration
+      # 9. Remove previous Buildozer state
+      - name: Clean Buildozer state
         run: |
-
-          echo "===== buildozer.spec ====="
-
-          cat buildozer.spec
-
-          echo
-          echo "===== SDK ====="
-
-          echo "$ANDROID_HOME"
-
-          echo
-          echo "===== Build Tools ====="
-
-          ls -lah \
-            "$ANDROID_HOME/build-tools/35.0.0"
-
-          echo
-          echo "===== Platform ====="
-
-          ls -lah \
-            "$ANDROID_HOME/platforms/android-33"
-
-
-      # --------------------------------
-      # 11. Clean Buildozer
-      # --------------------------------
-      - name: Clean Buildozer
-        run: |
-
           rm -rf .buildozer
           rm -rf bin
 
-          echo "Buildozer directories cleaned."
-
-
-      # --------------------------------
-      # 12. Build APK
-      # --------------------------------
+      # 10. Build APK
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
         run: |
-
           buildozer android debug
 
-
-      # --------------------------------
-      # 13. Check APK
-      # --------------------------------
+      # 11. Check APK
       - name: Check APK
         run: |
-
-          echo "===== Generated APK files ====="
-
+          echo "Generated APK files:"
           ls -lah bin/
 
-          echo
           echo "APK count:"
+          find bin -maxdepth 1 -type f -name "*.apk" | wc -l
 
-          find bin \
-            -maxdepth 1 \
-            -type f \
-            -name "*.apk" \
-            | wc -l
+          if ! find bin -maxdepth 1 -type f -name "*.apk" | grep -q .; then
+            echo "ERROR: No APK was generated."
+            exit 1
+          fi
 
-
-      # --------------------------------
-      # 14. Upload APK
-      # --------------------------------
+      # 12. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
