@@ -53,14 +53,14 @@ jobs:
             autoconf \
             automake \
             libtool \
-            libltdl-dev \
             pkg-config \
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
             cmake \
             libffi-dev \
-            libssl-dev
+            libssl-dev \
+            ccache
 
 
       # --------------------------------
@@ -68,67 +68,65 @@ jobs:
       # --------------------------------
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip
-
-          pip install "buildozer==1.5.0"
-
+          python -m pip install --upgrade pip setuptools wheel
+          pip install buildozer
           pip install "cython==0.29.36"
 
 
       # --------------------------------
-      # 6. Verify versions
+      # 6. Configure Android environment
       # --------------------------------
-      - name: Verify build environment
+      - name: Configure Android environment
         run: |
-          python --version
-          pip --version
-          buildozer --version
-          cython --version
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+
+          echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "ANDROIDNDK=/home/runner/.buildozer/android/platform/android-ndk-r28c" >> "$GITHUB_ENV"
+
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
 
       # --------------------------------
-      # 7. Clean Buildozer cache
+      # 7. Accept Android SDK licenses
       # --------------------------------
-      - name: Clean Buildozer cache
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER="/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager"
+
+          echo "Using sdkmanager:"
+          echo "$SDKMANAGER"
+
+          if [ -x "$SDKMANAGER" ]; then
+            yes | "$SDKMANAGER" --licenses || true
+
+            "$SDKMANAGER" \
+              "platform-tools" \
+              "platforms;android-33" \
+              "build-tools;35.0.0" || true
+          else
+            echo "sdkmanager not found."
+          fi
+
+
+      # --------------------------------
+      # 8. Clean previous Buildozer data
+      # --------------------------------
+      - name: Clean Buildozer
         run: |
           rm -rf .buildozer
           rm -rf bin
 
 
       # --------------------------------
-      # 8. Accept Android SDK licenses
-      # --------------------------------
-      - name: Accept Android SDK licenses
-        run: |
-          export ANDROID_HOME="/usr/local/lib/android/sdk"
-          export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-
-          echo "Using sdkmanager:"
-          echo "$SDKMANAGER"
-
-          "$SDKMANAGER" --version
-
-          yes | "$SDKMANAGER" --licenses || true
-
-          "$SDKMANAGER" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-          yes | "$SDKMANAGER" --licenses || true
-
-
-      # --------------------------------
       # 9. Build APK
       # --------------------------------
       - name: Build APK
+        env:
+          ACCEPT_EULA: "Y"
         run: |
-          yes | buildozer android debug
+          buildozer android debug
 
 
       # --------------------------------
@@ -139,8 +137,8 @@ jobs:
           echo "Generated APK files:"
           ls -lah bin/
 
-          echo "APK verification:"
-          find bin -maxdepth 1 -type f -name "*.apk" -print
+          echo "APK count:"
+          find bin -maxdepth 1 -type f -name "*.apk" | wc -l
 
 
       # --------------------------------
