@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       # ==========================================
-      # 2. Python
+      # 2. Python 3.11
       # ==========================================
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
@@ -39,7 +39,10 @@ jobs:
       # 4. System dependencies
       # ==========================================
       - name: Install system dependencies
+        shell: bash
         run: |
+          set -e
+
           sudo apt-get update
 
           sudo apt-get install -y \
@@ -60,92 +63,51 @@ jobs:
             ccache
 
       # ==========================================
-      # 5. Install Buildozer + Cython
+      # 5. Install Buildozer
       # ==========================================
       - name: Install Buildozer
+        shell: bash
         run: |
+          set -e
+
           python -m pip install --upgrade pip setuptools wheel
 
           pip install buildozer
 
           pip install "cython==0.29.36"
 
-          echo "Buildozer version:"
+          echo ""
+          echo "Buildozer:"
           buildozer --version
 
-          echo "Cython version:"
+          echo ""
+          echo "Cython:"
           cython --version
 
       # ==========================================
-      # 6. Android environment
+      # 6. Configure Android environment
       # ==========================================
       - name: Configure Android environment
-        run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-
-          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
-
-          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
-
-      # ==========================================
-      # 7. Patch Buildozer sdkmanager path
-      # ==========================================
-      - name: Patch Buildozer SDK manager path
         shell: bash
         run: |
           set -e
 
-          BUILDOZER_ANDROID=$(python - <<'PY'
-          import buildozer.targets.android
-          print(buildozer.targets.android.__file__)
-          PY
-          )
+          SDK="/usr/local/lib/android/sdk"
 
-          echo "Buildozer Android target:"
-          echo "$BUILDOZER_ANDROID"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
 
-          echo ""
-          echo "Original sdkmanager_path:"
-          grep -A15 -B3 "def sdkmanager_path" "$BUILDOZER_ANDROID" || true
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
-          python - <<'PY'
-          from pathlib import Path
-          import buildozer.targets.android
-
-          path = Path(buildozer.targets.android.__file__)
-          text = path.read_text()
-
-          old = """sdkmanager_path = join(
-            self.android_sdk_dir, 'tools', 'bin', sdk_manager_name)"""
-
-          new = """sdkmanager_path = join(
-            self.android_sdk_dir, 'cmdline-tools', 'latest', 'bin',
-            sdk_manager_name)"""
-
-          if old not in text:
-              raise SystemExit(
-                  "ERROR: Expected Buildozer sdkmanager code was not found."
-              )
-
-          text = text.replace(old, new, 1)
-
-          path.write_text(text)
-
-          print("Buildozer sdkmanager path patched successfully.")
-          PY
-
-          echo ""
-          echo "Patched sdkmanager_path:"
-          grep -A15 -B3 "def sdkmanager_path" "$BUILDOZER_ANDROID"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
 
       # ==========================================
-      # 8. Verify modern sdkmanager
+      # 7. Verify modern sdkmanager
       # ==========================================
-      - name: Verify Android SDK manager
+      - name: Verify modern sdkmanager
         shell: bash
         run: |
           set -e
@@ -160,17 +122,102 @@ jobs:
           echo "sdkmanager:"
           echo "$SDKMANAGER"
 
-          if [ ! -x "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found."
+          if [ ! -f "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager was not found:"
+            echo "$SDKMANAGER"
             exit 1
           fi
+
+          chmod +x "$SDKMANAGER"
 
           echo ""
           echo "sdkmanager version:"
           "$SDKMANAGER" --version
 
+          echo ""
+          echo "Modern sdkmanager is working."
+
       # ==========================================
-      # 9. Accept Android licenses
+      # 8. Patch Buildozer
+      #
+      # Buildozer currently searches for:
+      # tools/bin/sdkmanager
+      #
+      # GitHub runner provides:
+      # cmdline-tools/latest/bin/sdkmanager
+      #
+      # Patch the exact source line.
+      # ==========================================
+      - name: Patch Buildozer sdkmanager path
+        shell: bash
+        run: |
+          set -e
+
+          BUILDOZER_ANDROID=$(python - <<'PY'
+          import buildozer.targets.android
+          print(buildozer.targets.android.__file__)
+          PY
+          )
+
+          echo "Buildozer Android target:"
+          echo "$BUILDOZER_ANDROID"
+
+          echo ""
+          echo "Current sdkmanager code:"
+          grep -n -A12 -B5 "def sdkmanager_path" "$BUILDOZER_ANDROID"
+
+          python - "$BUILDOZER_ANDROID" <<'PY'
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          text = path.read_text()
+
+          old = "self.android_sdk_dir, 'tools', 'bin', sdk_manager_name"
+
+          new = "self.android_sdk_dir, 'cmdline-tools', 'latest', 'bin', sdk_manager_name"
+
+          if new in text:
+              print("Buildozer is already patched.")
+          elif old in text:
+              text = text.replace(old, new, 1)
+              path.write_text(text)
+              print("Buildozer sdkmanager path patched successfully.")
+          else:
+              print("ERROR: Could not find expected Buildozer sdkmanager path.")
+              print()
+              print("Expected source fragment:")
+              print(old)
+              print()
+              print("Actual sdkmanager section:")
+              
+              start = text.find("def sdkmanager_path")
+              
+              if start == -1:
+                  print("sdkmanager_path function was not found.")
+              else:
+                  print(text[start:start + 1500])
+
+              raise SystemExit(1)
+          PY
+
+          echo ""
+          echo "Patched sdkmanager code:"
+          grep -n -A12 -B5 "def sdkmanager_path" "$BUILDOZER_ANDROID"
+
+          echo ""
+          echo "Verifying patch..."
+
+          if ! grep -q "cmdline-tools.*latest.*bin.*sdk_manager_name" "$BUILDOZER_ANDROID"; then
+            echo "ERROR: Buildozer sdkmanager patch verification failed."
+            exit 1
+          fi
+
+          echo ""
+          echo "Buildozer sdkmanager patch: OK"
+
+      # ==========================================
+      # 9. Accept Android SDK licenses
       # ==========================================
       - name: Accept Android SDK licenses
         shell: bash
@@ -184,8 +231,11 @@ jobs:
 
           yes | "$SDKMANAGER" --licenses || true
 
+          echo ""
+          echo "Android SDK licenses processed."
+
       # ==========================================
-      # 10. Install exact Android components
+      # 10. Install required Android SDK components
       # ==========================================
       - name: Install Android SDK components
         shell: bash
@@ -195,116 +245,191 @@ jobs:
           SDK="/usr/local/lib/android/sdk"
           SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
 
-          echo "Installing Android platform tools..."
+          echo "Installing platform-tools..."
           "$SDKMANAGER" "platform-tools"
 
-          echo "Installing Android API 33..."
+          echo ""
+          echo "Installing Android platform 33..."
           "$SDKMANAGER" "platforms;android-33"
 
+          echo ""
           echo "Installing Build Tools 35.0.0..."
           "$SDKMANAGER" "build-tools;35.0.0"
 
           echo ""
-          echo "Installed build tools:"
+          echo "Installed Android platforms:"
+          ls -la "$SDK/platforms" || true
+
+          echo ""
+          echo "Installed Build Tools:"
           ls -la "$SDK/build-tools"
 
       # ==========================================
-      # 11. Remove incompatible Build Tools
+      # 11. Remove incompatible newer Build Tools
       # ==========================================
-      - name: Force Build Tools 35
+      - name: Keep Build Tools 35.0.0 only
         shell: bash
         run: |
           set -e
 
           SDK="/usr/local/lib/android/sdk"
 
-          echo "Removing Build Tools versions other than 35.0.0..."
+          echo "Build Tools before cleanup:"
+          ls -la "$SDK/build-tools"
 
           for dir in "$SDK"/build-tools/*; do
             if [ -d "$dir" ]; then
               version="$(basename "$dir")"
 
               if [ "$version" != "35.0.0" ]; then
-                echo "Removing: $dir"
+                echo "Removing incompatible Build Tools: $version"
                 sudo rm -rf "$dir"
               fi
             fi
           done
 
           echo ""
-          echo "Remaining Build Tools:"
+          echo "Build Tools after cleanup:"
           ls -la "$SDK/build-tools"
 
-          test -x "$SDK/build-tools/35.0.0/aidl"
+          test -d "$SDK/build-tools/35.0.0"
+
           test -x "$SDK/build-tools/35.0.0/aapt"
+          test -x "$SDK/build-tools/35.0.0/aidl"
 
           echo ""
           echo "AIDL:"
           "$SDK/build-tools/35.0.0/aidl" --help > /dev/null
 
-          echo "Build Tools 35.0.0 OK."
+          echo ""
+          echo "Build Tools 35.0.0 verification: OK"
 
       # ==========================================
-      # 12. Verify Buildozer sees modern sdkmanager
+      # 12. Verify Android SDK completely
       # ==========================================
-      - name: Verify Buildozer configuration
+      - name: Verify Android SDK
         shell: bash
         run: |
           set -e
 
-          python - <<'PY'
-          from buildozer.targets.android import TargetAndroid
+          SDK="/usr/local/lib/android/sdk"
 
-          print("Buildozer Android target loaded successfully.")
-          PY
+          echo "=========================================="
+          echo "ANDROID ENVIRONMENT"
+          echo "=========================================="
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
 
           echo ""
-          echo "Checking Buildozer source:"
-          python - <<'PY'
-          import buildozer.targets.android
+          echo "=========================================="
+          echo "SDK MANAGER"
+          echo "=========================================="
 
-          path = buildozer.targets.android.__file__
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
 
-          print(path)
+          echo ""
+          echo "=========================================="
+          echo "PLATFORM TOOLS"
+          echo "=========================================="
 
-          with open(path, "r") as f:
-              text = f.read()
+          test -x "$SDK/platform-tools/adb"
+          "$SDK/platform-tools/adb" version
 
-          if "cmdline-tools', 'latest', 'bin'" not in text:
-              raise SystemExit(
-                  "ERROR: Buildozer was NOT patched correctly."
-              )
+          echo ""
+          echo "=========================================="
+          echo "ANDROID PLATFORM 33"
+          echo "=========================================="
 
-          print("Buildozer is using cmdline-tools/latest/bin/sdkmanager")
-          PY
+          test -d "$SDK/platforms/android-33"
+
+          echo ""
+          echo "=========================================="
+          echo "BUILD TOOLS 35.0.0"
+          echo "=========================================="
+
+          test -d "$SDK/build-tools/35.0.0"
+          test -x "$SDK/build-tools/35.0.0/aapt"
+          test -x "$SDK/build-tools/35.0.0/aidl"
+
+          echo ""
+          echo "=========================================="
+          echo "AIDL"
+          echo "=========================================="
+
+          "$SDK/build-tools/35.0.0/aidl" --help > /dev/null
+
+          echo ""
+          echo "=========================================="
+          echo "ANDROID SDK VERIFICATION SUCCESSFUL"
+          echo "=========================================="
 
       # ==========================================
-      # 13. Clean project build files
+      # 13. Verify Buildozer patch one more time
+      # ==========================================
+      - name: Verify Buildozer patch
+        shell: bash
+        run: |
+          set -e
+
+          BUILDOZER_ANDROID=$(python - <<'PY'
+          import buildozer.targets.android
+          print(buildozer.targets.android.__file__)
+          PY
+          )
+
+          echo "Buildozer Android target:"
+          echo "$BUILDOZER_ANDROID"
+
+          if grep -q "self.android_sdk_dir, 'tools', 'bin', sdk_manager_name" "$BUILDOZER_ANDROID"; then
+            echo "ERROR: Buildozer still uses legacy tools/bin/sdkmanager."
+            exit 1
+          fi
+
+          if ! grep -q "cmdline-tools.*latest.*bin.*sdk_manager_name" "$BUILDOZER_ANDROID"; then
+            echo "ERROR: Buildozer does not use modern cmdline-tools sdkmanager."
+            exit 1
+          fi
+
+          echo ""
+          echo "Buildozer sdkmanager configuration: CORRECT"
+
+      # ==========================================
+      # 14. Clean project
       # ==========================================
       - name: Clean project build
         shell: bash
         run: |
+          set -e
+
           rm -rf .buildozer
           rm -rf bin
 
+          echo "Project build directories cleaned."
+
       # ==========================================
-      # 14. Build APK
+      # 15. Build APK
       # ==========================================
       - name: Build APK
+        shell: bash
         env:
           ACCEPT_EULA: "Y"
         run: |
+          set -e
+
+          echo "Starting Buildozer Android build..."
+
           buildozer android debug
 
       # ==========================================
-      # 15. Verify APK
+      # 16. Verify APK
       # ==========================================
       - name: Verify APK
         shell: bash
         run: |
           set -e
 
-          echo "APK files:"
+          echo "Generated APK files:"
           ls -lah bin/
 
           APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
@@ -317,8 +442,11 @@ jobs:
             exit 1
           fi
 
+          echo ""
+          echo "APK successfully generated."
+
       # ==========================================
-      # 16. Upload APK
+      # 17. Upload APK
       # ==========================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
