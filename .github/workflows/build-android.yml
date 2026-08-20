@@ -12,27 +12,48 @@ jobs:
 
     steps:
 
+      # ========================================
+      # 1. Checkout
+      # ========================================
       - name: Checkout
         uses: actions/checkout@v4
 
+
+      # ========================================
+      # 2. Setup Python 3.11
+      # ========================================
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+
+      # ========================================
+      # 3. Setup Java 17
+      # ========================================
       - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
+
+      # ========================================
+      # 4. Linux dependencies
+      # ========================================
       - name: Install system dependencies
         run: |
+          set -e
+
           sudo apt-get update
+
           sudo apt-get install -y \
             git \
             zip \
             unzip \
+            wget \
+            curl \
+            ca-certificates \
             autoconf \
             automake \
             libtool \
@@ -47,10 +68,17 @@ jobs:
             libltdl-dev \
             ccache
 
+
+      # ========================================
+      # 5. Install Buildozer
+      # ========================================
       - name: Install Buildozer
         run: |
+          set -e
+
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
+
           python -m pip install "Cython==0.29.36"
           python -m pip install buildozer
 
@@ -69,55 +97,173 @@ jobs:
           echo "========================================"
           buildozer --version
 
+
+      # ========================================
+      # 6. Verify Frahoosh project
+      # ========================================
       - name: Verify Frahoosh project
         run: |
           set -e
 
           echo "========================================"
-          echo "PROJECT"
+          echo "PROJECT VERIFICATION"
           echo "========================================"
 
+          echo "Project root:"
           pwd
 
           echo ""
           echo "Checking buildozer.spec..."
           test -f buildozer.spec
-          echo "buildozer.spec found."
+          echo "OK: buildozer.spec exists"
 
           echo ""
           echo "Checking mobile directory..."
           test -d mobile
-          echo "mobile directory found."
+          echo "OK: mobile directory exists"
 
           echo ""
-          echo "Checking main.py..."
+          echo "Checking mobile/main.py..."
           test -f mobile/main.py
-          echo "mobile/main.py found."
+          echo "OK: mobile/main.py exists"
 
           echo ""
-          echo "Checking Python syntax..."
+          echo "Python syntax check..."
           python -m compileall -q mobile
-          echo "Python syntax OK."
+          echo "OK: Python syntax"
 
           echo ""
-          echo "Frahoosh mobile files:"
+          echo "Project files:"
           find mobile -type f \
             ! -path "*/__pycache__/*" \
             | sort
 
+          echo ""
+          echo "========================================"
+          echo "buildozer.spec"
+          echo "========================================"
+
+          cat buildozer.spec
+
+
+      # ========================================
+      # 7. Clean old Buildozer data
+      # ========================================
       - name: Clean Buildozer
         run: |
           set -e
 
-          echo "Cleaning previous Buildozer files..."
+          echo "Cleaning old Buildozer files..."
 
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
 
-          echo "Clean build environment ready."
+          echo "Clean completed."
 
+
+      # ========================================
+      # 8. Prepare Buildozer internal SDK
+      # ========================================
+      #
+      # IMPORTANT:
+      # Buildozer downloads its own Android SDK into:
+      #
+      # .buildozer/android/platform/android-sdk
+      #
+      # The previous failure happened because the SDK
+      # license for platform-tools was not accepted.
+      #
+      # We therefore prepare the license directory BEFORE
+      # Buildozer creates/downloads the SDK.
+      #
+      # ========================================
+      - name: Prepare Android SDK licenses
+        run: |
+          set -e
+
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
+          LICENSE_DIR="$SDK/licenses"
+
+          echo "========================================"
+          echo "PREPARING BUILDOZER SDK LICENSES"
+          echo "========================================"
+
+          echo "SDK:"
+          echo "$SDK"
+
+          echo "Creating license directory:"
+          mkdir -p "$LICENSE_DIR"
+
+          #
+          # Android SDK License
+          #
+          # This is the license required by packages such
+          # as platform-tools.
+          #
+          printf '%s\n' \
+            "d56f5187479451eabf01fb78af6dfcb131a6481e" \
+            > "$LICENSE_DIR/android-sdk-license"
+
+          #
+          # Android SDK Preview License
+          #
+          printf '%s\n' \
+            "84831b9409646a918e30573bab4c9c91346d8abd" \
+            > "$LICENSE_DIR/android-sdk-preview-license"
+
+          echo ""
+          echo "License files created:"
+          ls -lah "$LICENSE_DIR"
+
+          echo ""
+          echo "android-sdk-license:"
+          cat "$LICENSE_DIR/android-sdk-license"
+
+          echo ""
+          echo "android-sdk-preview-license:"
+          cat "$LICENSE_DIR/android-sdk-preview-license"
+
+
+      # ========================================
+      # 9. Prepare Android environment
+      # ========================================
+      #
+      # These variables are supplied to python-for-android
+      # and Buildozer.
+      #
+      # We intentionally DO NOT patch Buildozer's
+      # sdkmanager_path.
+      #
+      # ========================================
+      - name: Configure Android environment
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "ANDROID ENVIRONMENT"
+          echo "========================================"
+
+          echo "JAVA_HOME:"
+          echo "$JAVA_HOME"
+
+          echo "Python:"
+          python --version
+
+          echo ""
+          echo "Android environment configured."
+
+          #
+          # Do not force an external SDK here.
+          # Buildozer will manage its own SDK.
+          #
+          echo "Buildozer will manage its own Android SDK."
+
+
+      # ========================================
+      # 10. Build APK
+      # ========================================
       - name: Build APK
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -126,40 +272,72 @@ jobs:
           set -e
 
           echo "========================================"
-          echo "BUILDING FRAHOOSH APK"
+          echo "BUILD FRAHOOSH ANDROID APK"
           echo "========================================"
 
+          echo "Buildozer:"
+          buildozer --version
+
+          echo ""
+          echo "Starting Android debug build..."
+
+          #
+          # The SDK license files have already been prepared.
+          #
+          # Do NOT pipe 'yes' into Buildozer.
+          # Buildozer/python-for-android must receive its
+          # normal stdin so sdkmanager can operate correctly.
+          #
           buildozer -v android debug
 
+
+      # ========================================
+      # 11. Verify APK
+      # ========================================
       - name: Verify APK
         run: |
           set -e
 
           echo "========================================"
-          echo "VERIFYING APK"
+          echo "VERIFY APK"
           echo "========================================"
 
           echo ""
-          echo "Contents of bin:"
+          echo "bin directory:"
           ls -lah bin/
 
           echo ""
           echo "Searching for APK..."
 
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+          APK_COUNT=$(find bin \
+            -maxdepth 1 \
+            -type f \
+            -name "*.apk" \
+            | wc -l)
 
           echo "APK count: $APK_COUNT"
 
           if [ "$APK_COUNT" -eq 0 ]; then
             echo ""
-            echo "ERROR: No APK was generated."
+            echo "ERROR: APK was not generated."
+            echo ""
+            echo "Buildozer directory:"
+            ls -lah .buildozer/ || true
             exit 1
           fi
 
-          APK=$(find bin -maxdepth 1 -type f -name "*.apk" | head -n 1)
+          APK=$(find bin \
+            -maxdepth 1 \
+            -type f \
+            -name "*.apk" \
+            | head -n 1)
 
           echo ""
-          echo "APK successfully generated:"
+          echo "========================================"
+          echo "APK GENERATED SUCCESSFULLY"
+          echo "========================================"
+
+          echo "APK:"
           echo "$APK"
 
           echo ""
@@ -170,10 +348,14 @@ jobs:
           echo "APK SHA256:"
           sha256sum "$APK"
 
+
+      # ========================================
+      # 12. Upload APK
+      # ========================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: frahoosh-apk
           path: bin/*.apk
           if-no-files-found: error
-
+`
