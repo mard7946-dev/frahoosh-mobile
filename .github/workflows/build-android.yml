@@ -12,35 +12,24 @@ jobs:
 
     steps:
 
-      # --------------------------------
       # 1. Checkout
-      # --------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
-
-      # --------------------------------
-      # 2. Python 3.11.9
-      # --------------------------------
+      # 2. Python
       - name: Setup Python 3.11.9
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
 
-
-      # --------------------------------
       # 3. Java 17
-      # --------------------------------
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-
-      # --------------------------------
       # 4. System dependencies
-      # --------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -49,89 +38,71 @@ jobs:
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
             autoconf \
             automake \
-            autopoint \
-            gettext \
             libtool \
             pkg-config \
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
-            libtinfo6 \
             cmake \
             libffi-dev \
             libssl-dev \
             ccache
 
-
-      # --------------------------------
-      # 5. Install Buildozer
-      # --------------------------------
-      - name: Install Buildozer
+      # 5. Python build tools
+      - name: Install Python build tools
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install buildozer
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<70"
+          python -m pip install wheel
           python -m pip install "cython==0.29.36"
+          python -m pip install buildozer
 
-
-      # --------------------------------
-      # 6. Android environment
-      # --------------------------------
-      - name: Configure Android environment
+      # 6. Verify environment
+      - name: Verify environment
         run: |
-          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+          echo "========== PYTHON =========="
+          python --version
+          which python
 
+          echo "========== CYTHON =========="
+          cython --version
 
-      # --------------------------------
-      # 7. Accept SDK licenses
-      # --------------------------------
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p "$HOME/.buildozer/android/platform"
+          echo "========== BUILDOZER =========="
+          buildozer version
 
-          if [ -x "/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
-            yes | "/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          fi
+          echo "========== JAVA =========="
+          java -version
 
+          echo "========== JAVA HOME =========="
+          echo "$JAVA_HOME"
 
-      # --------------------------------
-      # 8. Clean old build data
-      # --------------------------------
-      - name: Clean Buildozer
+      # 7. Clean only project build data
+      # DO NOT run: buildozer android clean
+      - name: Clean project build data
         run: |
           rm -rf .buildozer
           rm -rf bin
-          rm -rf "$HOME/.buildozer"
+          mkdir -p bin
 
-
-      # --------------------------------
-      # 9. Build APK
-      # --------------------------------
+      # 8. Build APK
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
         run: |
-          buildozer android debug
+          buildozer -v android debug
 
-
-      # --------------------------------
-      # 10. Check APK
-      # --------------------------------
+      # 9. Check APK
       - name: Check APK
         run: |
-          echo "Generated APK files:"
+          echo "========== APK FILES =========="
           ls -lah bin/
 
-          echo "APK count:"
+          echo "========== APK COUNT =========="
           find bin -maxdepth 1 -type f -name "*.apk" | wc -l
 
-
-      # --------------------------------
-      # 11. Upload APK
-      # --------------------------------
+      # 10. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
