@@ -69,7 +69,9 @@ jobs:
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip setuptools wheel
+
           pip install buildozer
+
           pip install "cython==0.29.36"
 
 
@@ -82,41 +84,44 @@ jobs:
           echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
 
           echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROIDNDK=/home/runner/.buildozer/android/platform/android-ndk-r28c" >> "$GITHUB_ENV"
 
           echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
           echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
 
       # --------------------------------
-      # 7. Accept Android SDK licenses
+      # 7. Verify environment
       # --------------------------------
-      - name: Accept Android SDK licenses
+      - name: Verify build environment
         run: |
-          SDKMANAGER="/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager"
+          echo "Python:"
+          python --version
 
-          echo "Using sdkmanager:"
-          echo "$SDKMANAGER"
+          echo "Cython:"
+          cython --version
 
-          if [ -x "$SDKMANAGER" ]; then
-            yes | "$SDKMANAGER" --licenses || true
+          echo "Java:"
+          java -version
 
-            "$SDKMANAGER" \
-              "platform-tools" \
-              "platforms;android-33" \
-              "build-tools;35.0.0" || true
-          else
-            echo "sdkmanager not found."
-          fi
+          echo "Buildozer:"
+          buildozer version
+
+          echo "Android SDK:"
+          echo "$ANDROID_HOME"
+
+          echo "Android SDK contents:"
+          ls -la "$ANDROID_HOME" || true
 
 
       # --------------------------------
-      # 8. Clean previous Buildozer data
+      # 8. Clean Buildozer
       # --------------------------------
       - name: Clean Buildozer
         run: |
           rm -rf .buildozer
           rm -rf bin
+
+          mkdir -p bin
 
 
       # --------------------------------
