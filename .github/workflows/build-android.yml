@@ -12,16 +12,25 @@ jobs:
 
     steps:
 
+      # ========================================
+      # 1. Checkout
+      # ========================================
       - name: Checkout
         uses: actions/checkout@v4
 
 
+      # ========================================
+      # 2. Python 3.11
+      # ========================================
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
 
+      # ========================================
+      # 3. Java 17
+      # ========================================
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -29,8 +38,13 @@ jobs:
           java-version: "17"
 
 
+      # ========================================
+      # 4. Linux dependencies
+      # ========================================
       - name: Install Linux dependencies
         run: |
+          set -e
+
           sudo apt-get update
 
           sudo apt-get install -y \
@@ -53,17 +67,59 @@ jobs:
             ccache
 
 
+      # ========================================
+      # 5. Android SDK
+      # ========================================
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
 
-      - name: Install Android SDK components
+      # ========================================
+      # 6. Configure Android environment
+      # ========================================
+      - name: Configure Android environment
+        run: |
+          set -e
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
+          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+
+          echo "----------------------------------------"
+          echo "SDK Manager"
+          echo "----------------------------------------"
+
+          sdkmanager --version
+
+          echo "----------------------------------------"
+          echo "ADB"
+          echo "----------------------------------------"
+
+          adb version
+
+
+      # ========================================
+      # 7. Accept Android licenses
+      # ========================================
+      - name: Accept Android SDK licenses
         run: |
           set -e
 
           echo "Accepting Android SDK licenses..."
 
-          yes | sdkmanager --licenses || true
+          yes | sdkmanager --licenses > /dev/null || true
+
+          echo "Android licenses processed."
+
+
+      # ========================================
+      # 8. Install Android SDK components
+      # ========================================
+      - name: Install Android SDK components
+        run: |
+          set -e
 
           echo "Installing Android SDK components..."
 
@@ -72,35 +128,21 @@ jobs:
             "platforms;android-33" \
             "build-tools;35.0.0"
 
-          echo "Android SDK installation completed."
-
-          echo "Installed platforms:"
+          echo ""
+          echo "Installed Android platforms:"
           ls -la "$ANDROID_HOME/platforms"
 
-          echo "Installed build tools:"
+          echo ""
+          echo "Installed Android build-tools:"
           ls -la "$ANDROID_HOME/build-tools"
 
-
-      - name: Configure Android environment
-        run: |
-          set -e
-
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
-
-          echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
-
-          echo "Android SDK:"
-          echo "$ANDROID_HOME"
-
-          echo "SDK Manager:"
-          sdkmanager --version
-
-          echo "ADB:"
-          adb version
+          echo ""
+          echo "Android SDK installation completed."
 
 
+      # ========================================
+      # 9. Install Buildozer + Cython
+      # ========================================
       - name: Install Buildozer and Cython
         run: |
           set -e
@@ -111,12 +153,14 @@ jobs:
           python -m pip install "Cython==0.29.36"
           python -m pip install "buildozer==1.5.0"
 
+          echo ""
           echo "========================================"
           echo "Buildozer"
           echo "========================================"
 
           buildozer --version
 
+          echo ""
           echo "========================================"
           echo "Cython"
           echo "========================================"
@@ -124,6 +168,9 @@ jobs:
           cython --version
 
 
+      # ========================================
+      # 10. Verify project
+      # ========================================
       - name: Verify Frahoosh project
         run: |
           set -e
@@ -138,7 +185,9 @@ jobs:
 
           echo ""
           echo "buildozer.spec:"
+          echo "----------------------------------------"
           cat buildozer.spec
+          echo "----------------------------------------"
 
           echo ""
           echo "Mobile files:"
@@ -149,9 +198,13 @@ jobs:
 
           python -m compileall -q mobile
 
+          echo ""
           echo "Project verification successful."
 
 
+      # ========================================
+      # 11. Clean previous Buildozer files
+      # ========================================
       - name: Clean Buildozer
         run: |
           set -e
@@ -166,10 +219,14 @@ jobs:
           echo "Clean build directory ready."
 
 
+      # ========================================
+      # 12. Build APK
+      # ========================================
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
         run: |
           set -e
 
@@ -206,9 +263,12 @@ jobs:
           echo "Running Buildozer"
           echo "========================================"
 
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
 
+      # ========================================
+      # 13. Check APK
+      # ========================================
       - name: Check APK
         run: |
           set -e
@@ -222,6 +282,7 @@ jobs:
           APK="$(find bin -maxdepth 1 -type f -name '*.apk' | head -n 1)"
 
           if [ -z "$APK" ]; then
+            echo ""
             echo "ERROR: No APK was generated."
             exit 1
           fi
@@ -235,6 +296,9 @@ jobs:
           ls -lh "$APK"
 
 
+      # ========================================
+      # 14. Verify APK archive
+      # ========================================
       - name: Verify APK
         run: |
           set -e
@@ -251,6 +315,9 @@ jobs:
           echo "APK archive is valid."
 
 
+      # ========================================
+      # 15. Upload APK
+      # ========================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
