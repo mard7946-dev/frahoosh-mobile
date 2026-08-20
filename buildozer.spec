@@ -11,13 +11,17 @@ requirements = python3,kivy,requests
 orientation = portrait
 fullscreen = 0
 
+# Automatically accept Android SDK licenses
+android.accept_sdk_license = True
+
+
 [android]
 android.api = 35
 android.minapi = 23
 android.ndk = 27c
 android.archs = arm64-v8a
 android.permissions = INTERNET
-android.accept_sdk_license = True
+
 
 [buildozer]
 log_level = 2
