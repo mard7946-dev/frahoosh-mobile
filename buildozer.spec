@@ -15,7 +15,9 @@ orientation = portrait
 fullscreen = 0
 
 
-[android]
+# --------------------------------
+# Android
+# --------------------------------
 
 android.api = 33
 android.minapi = 24
@@ -29,7 +31,11 @@ android.permissions = INTERNET
 
 android.accept_sdk_license = True
 
+# Use GitHub Actions system Android SDK
 android.sdk_path = /usr/local/lib/android/sdk
+
+# Do not let Buildozer update/download another SDK
+android.skip_update = True
 
 
 [buildozer]
