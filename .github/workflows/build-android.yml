@@ -63,24 +63,31 @@ jobs:
 
 
       # -----------------------------
-      # 5. Android SDK setup
+      # 5. Setup Android SDK
       # -----------------------------
       - name: Setup Android SDK
         run: |
-          export ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT"
-          export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          export ANDROID_HOME="/usr/local/lib/android/sdk"
+          export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
 
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          export CMDLINE_TOOLS="$ANDROID_SDK_ROOT/cmdline-tools/16.0/bin"
+
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "CMDLINE_TOOLS=$CMDLINE_TOOLS"
 
-          yes | sdkmanager --licenses || true
+          ls -la "$CMDLINE_TOOLS"
 
-          sdkmanager \
+          "$CMDLINE_TOOLS/sdkmanager" --version
+
+          yes | "$CMDLINE_TOOLS/sdkmanager" --licenses || true
+
+          "$CMDLINE_TOOLS/sdkmanager" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;37.0.0"
 
-          yes | sdkmanager --licenses
+          yes | "$CMDLINE_TOOLS/sdkmanager" --licenses || true
 
 
       # -----------------------------
@@ -94,7 +101,7 @@ jobs:
 
 
       # -----------------------------
-      # 7. Clean previous Buildozer files
+      # 7. Clean Buildozer
       # -----------------------------
       - name: Clean Buildozer
         run: |
