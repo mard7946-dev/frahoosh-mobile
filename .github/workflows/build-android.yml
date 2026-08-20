@@ -18,6 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       # --------------------------------
       # 2. Python 3.11
       # --------------------------------
@@ -26,17 +27,19 @@ jobs:
         with:
           python-version: "3.11"
 
+
       # --------------------------------
       # 3. Java 17
       # --------------------------------
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
+
       # --------------------------------
-      # 4. System dependencies
+      # 4. Linux dependencies
       # --------------------------------
       - name: Install system dependencies
         run: |
@@ -57,138 +60,203 @@ jobs:
             cmake \
             libffi-dev \
             libssl-dev \
-            ccache
+            ccache \
+            libltdl-dev \
+            build-essential
+
 
       # --------------------------------
       # 5. Install Buildozer
       # --------------------------------
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install buildozer
-          pip install "cython==0.29.36"
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel
+
+          python -m pip install buildozer
+
+          python -m pip install "cython==0.29.36"
+
+          echo "Buildozer:"
+          buildozer --version
+
+          echo "Cython:"
+          cython --version
+
 
       # --------------------------------
       # 6. Android environment
       # --------------------------------
       - name: Configure Android environment
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "ANDROIDSDK=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          SDK="/usr/local/lib/android/sdk"
+
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+
+          echo "ANDROIDSDK=$SDK" >> "$GITHUB_ENV"
 
           echo "ANDROIDAPI=33" >> "$GITHUB_ENV"
           echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
 
-          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
-
-      # --------------------------------
-      # 7. Configure legacy sdkmanager
-      # --------------------------------
-      - name: Configure SDK manager compatibility
-        shell: bash
-        run: |
-          set -e
-
-          SDK="$ANDROID_HOME"
-          MODERN_SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
-          LEGACY_DIR="$SDK/tools/bin"
-          LEGACY_SDKMANAGER="$LEGACY_DIR/sdkmanager"
-
-          echo "SDK:"
-          echo "$SDK"
+          echo "SDK=$SDK"
 
           echo "Modern sdkmanager:"
-          echo "$MODERN_SDKMANAGER"
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
 
-          if [ ! -f "$MODERN_SDKMANAGER" ]; then
-            echo "ERROR: Modern sdkmanager was not found."
-            exit 1
-          fi
-
-          if [ ! -x "$MODERN_SDKMANAGER" ]; then
-            echo "ERROR: Modern sdkmanager is not executable."
-            ls -l "$MODERN_SDKMANAGER"
-            exit 1
-          fi
-
-          echo "Creating legacy SDK manager directory..."
-
-          sudo mkdir -p "$LEGACY_DIR"
-
-          echo "Creating real wrapper..."
-
-          sudo rm -f "$LEGACY_SDKMANAGER"
-
-          sudo tee "$LEGACY_SDKMANAGER" > /dev/null <<'EOF'
-          #!/bin/sh
-          exec /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "$@"
-          EOF
-
-          sudo chmod 755 "$LEGACY_SDKMANAGER"
-
-          echo "Legacy sdkmanager created:"
-          ls -la "$LEGACY_DIR"
-
-          echo "Testing legacy sdkmanager..."
-
-          "$LEGACY_SDKMANAGER" --version
 
       # --------------------------------
-      # 8. Accept Android SDK licenses
+      # 7. Accept licenses + install SDK
       # --------------------------------
-      - name: Accept Android SDK licenses
-        shell: bash
+      - name: Install Android SDK components
         run: |
           set -e
 
           SDK="$ANDROID_HOME"
           SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
 
+          echo "Using sdkmanager:"
+          echo "$SDKMANAGER"
+
+          test -f "$SDKMANAGER"
+
+          chmod +x "$SDKMANAGER" || true
+
           echo "Accepting Android SDK licenses..."
 
           yes | "$SDKMANAGER" --licenses > /dev/null || true
 
-          echo "Installing required Android SDK packages..."
+          echo "Installing required SDK packages..."
 
-          "$SDKMANAGER" \
+          yes | "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;35.0.0"
 
-          echo "Installed SDK packages:"
-          "$SDKMANAGER" --list_installed || true
+          echo "SDK packages installed."
+
+          echo "Installed platforms:"
+          ls -la "$SDK/platforms"
+
+          echo "Installed build tools:"
+          ls -la "$SDK/build-tools"
+
 
       # --------------------------------
-      # 9. Clean old Buildozer data
+      # 8. Patch Buildozer sdkmanager path
+      # --------------------------------
+      - name: Fix Buildozer SDK manager path
+        run: |
+          set -e
+
+          BUILD0ZER_ANDROID=$(python - <<'PY'
+          import buildozer.targets.android
+          print(buildozer.targets.android.__file__)
+          PY
+          )
+
+          echo "Buildozer Android target:"
+          echo "$BUILD0ZER_ANDROID"
+
+          python - "$BUILD0ZER_ANDROID" <<'PY'
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          text = path.read_text()
+
+          old = """sdkmanager_path = join(
+                self.android_sdk_dir, 'tools', 'bin', sdk_manager_name)"""
+
+          new = """sdkmanager_path = join(
+                self.android_sdk_dir, 'cmdline-tools', 'latest', 'bin',
+                sdk_manager_name)"""
+
+          if old in text:
+              text = text.replace(old, new)
+              path.write_text(text)
+              print("Buildozer sdkmanager path patched successfully.")
+          elif "cmdline-tools', 'latest', 'bin'" in text:
+              print("Buildozer already uses modern sdkmanager path.")
+          else:
+              print("ERROR: Could not locate Buildozer sdkmanager code.")
+              sys.exit(1)
+          PY
+
+          echo "Checking patched Buildozer source..."
+
+          grep -n -A5 -B3 "sdkmanager_path" "$BUILD0ZER_ANDROID" || true
+
+
+      # --------------------------------
+      # 9. Verify project
+      # --------------------------------
+      - name: Verify Frahoosh project
+        run: |
+          echo "Project root:"
+          pwd
+
+          echo ""
+          echo "buildozer.spec:"
+          cat buildozer.spec
+
+          echo ""
+          echo "Mobile files:"
+          find mobile -maxdepth 3 -type f -print | sort
+
+
+      # --------------------------------
+      # 10. Clean Buildozer
       # --------------------------------
       - name: Clean Buildozer
         run: |
           rm -rf .buildozer
           rm -rf bin
 
+          mkdir -p bin
+
+
       # --------------------------------
-      # 10. Build APK
+      # 11. Build APK
       # --------------------------------
       - name: Build APK
         env:
           ACCEPT_EULA: "Y"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
         run: |
+          set -e
+
+          echo "Starting Buildozer Android build..."
+
           buildozer android debug
 
+
       # --------------------------------
-      # 11. Check APK
+      # 12. Check APK
       # --------------------------------
       - name: Check APK
         run: |
+          set -e
+
           echo "Generated APK files:"
           ls -lah bin/
 
+          echo ""
           echo "APK count:"
           find bin -maxdepth 1 -type f -name "*.apk" | wc -l
 
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: No APK generated."
+            exit 1
+          fi
+
+          echo "APK successfully generated."
+
+
       # --------------------------------
-      # 12. Upload APK
+      # 13. Upload APK
       # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
