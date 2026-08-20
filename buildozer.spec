@@ -1,4 +1,5 @@
 [app]
+
 title = Frahoosh Mobile
 package.name = frahoosh
 package.domain = ir.frahoosh
@@ -8,7 +9,7 @@ source.include_exts = py,png,jpg,jpeg,svg,kv,json,txt
 
 version = 1.0.0
 
-requirements = python3,kivy,requests
+requirements = python3==3.11.9,hostpython3==3.11.9,kivy,requests
 
 orientation = portrait
 fullscreen = 0
