@@ -29,9 +29,7 @@ jobs:
       - name: Install system dependencies
         run: |
           set -e
-
           sudo apt-get update
-
           sudo apt-get install -y \
             git \
             zip \
@@ -55,26 +53,18 @@ jobs:
       - name: Install Python build tools
         run: |
           set -e
-
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
-
           python -m pip install "Cython==0.29.36"
           python -m pip install buildozer
 
-          echo "========================================"
-          echo "PYTHON"
-          echo "========================================"
+          echo "Python:"
           python --version
 
-          echo "========================================"
-          echo "CYTHON"
-          echo "========================================"
+          echo "Cython:"
           cython --version
 
-          echo "========================================"
-          echo "BUILDOZER"
-          echo "========================================"
+          echo "Buildozer:"
           buildozer --version
 
       - name: Verify project
@@ -92,20 +82,11 @@ jobs:
           echo "Python syntax check..."
           python -m compileall -q mobile
 
-          echo "Project structure:"
-          find mobile -type f \
-            ! -path "*/__pycache__/*" \
-            | sort
-
           echo "Project verification completed."
 
       - name: Prepare buildozer.spec
         run: |
           set -e
-
-          echo "========================================"
-          echo "PREPARE BUILDOZER SPEC"
-          echo "========================================"
 
           python - <<'PY'
           from pathlib import Path
@@ -144,23 +125,19 @@ jobs:
 
           path.write_text("\n".join(result) + "\n")
 
-          print(path.read_text())
+          print("buildozer.spec prepared successfully.")
           PY
 
       - name: Clean Buildozer
         run: |
           set -e
 
-          echo "========================================"
-          echo "CLEAN BUILDOZER"
-          echo "========================================"
+          echo "Cleaning previous build..."
 
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
-
-          echo "Clean completed."
 
       - name: Build APK
         env:
@@ -170,13 +147,8 @@ jobs:
           set -e
 
           echo "========================================"
-          echo "BUILD FRAHOOSH APK"
+          echo "BUILDING FRAHOOSH APK"
           echo "========================================"
-
-          echo "Buildozer version:"
-          buildozer --version
-
-          echo "Starting Android build..."
 
           buildozer -v android debug
 
@@ -188,10 +160,7 @@ jobs:
           echo "VERIFY APK"
           echo "========================================"
 
-          if [ ! -d bin ]; then
-            echo "ERROR: bin directory does not exist."
-            exit 1
-          fi
+          test -d bin
 
           ls -lah bin/
 
@@ -214,17 +183,13 @@ jobs:
             -name "*.apk" \
             | head -n 1)
 
-          echo "========================================"
-          echo "APK GENERATED"
-          echo "========================================"
-
           echo "APK:"
           echo "$APK"
 
-          echo "Size:"
+          echo "APK size:"
           ls -lh "$APK"
 
-          echo "SHA256:"
+          echo "APK SHA256:"
           sha256sum "$APK"
 
           echo "APK successfully generated."
