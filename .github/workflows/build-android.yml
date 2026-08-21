@@ -11,31 +11,23 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-
-      # 1. Checkout
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Python
-      - name: Setup Python 3.11
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # 3. Java
-      - name: Setup Java 17
-        uses: actions/setup-java@v5
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      # 4. Linux dependencies
-      - name: Install system dependencies
+      - name: Install Linux dependencies
         run: |
-          set -e
-
           sudo apt-get update
-
           sudo apt-get install -y \
             git \
             zip \
@@ -56,177 +48,85 @@ jobs:
             libltdl-dev \
             ccache
 
-      # 5. Python build tools
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer
         run: |
-          set -e
-
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
-
           python -m pip install "Cython==0.29.36"
           python -m pip install buildozer
 
-          echo "Python:"
           python --version
-
-          echo "Cython:"
           cython --version
-
-          echo "Buildozer:"
           buildozer --version
 
-      # 6. Prepare the Android SDK in the exact location
-      #    expected by Buildozer
-      - name: Prepare Buildozer Android SDK
+      - name: Verify project
         run: |
           set -e
-
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-          TMP="$RUNNER_TEMP/android-sdk"
-
-          echo "SDK:"
-          echo "$SDK"
-
-          rm -rf "$SDK"
-          rm -rf "$TMP"
-
-          mkdir -p "$SDK"
-          mkdir -p "$TMP"
-
-          cd "$TMP"
-
-          echo "Downloading Android command line tools..."
-
-          curl -L --fail \
-            -o commandlinetools.zip \
-            https://dl.google.com/android/repository/commandlinetools-linux-6514223_latest.zip
-
-          echo "Extracting command line tools..."
-
-          unzip -q commandlinetools.zip
-
-          mkdir -p "$SDK/tools"
-
-          cp -R cmdline-tools/. "$SDK/tools/"
-
-          echo "sdkmanager:"
-          test -f "$SDK/tools/bin/sdkmanager"
-
-          chmod +x "$SDK/tools/bin/sdkmanager"
-
-          "$SDK/tools/bin/sdkmanager" --version
-
-          echo "Android SDK prepared."
-
-      # 7. Accept Android licenses and install required SDK packages
-      - name: Accept Android licenses
-        run: |
-          set -e
-
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-          SDKMANAGER="$SDK/tools/bin/sdkmanager"
-
-          echo "SDK:"
-          echo "$SDK"
-
-          echo "sdkmanager:"
-          echo "$SDKMANAGER"
-
-          test -f "$SDKMANAGER"
-
-          echo "Accepting Android SDK licenses..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            --licenses || true
-
-          echo "Installing platform tools..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            "platform-tools"
-
-          echo "Installing Android platform 35..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            "platforms;android-35"
-
-          echo "Installing Android build tools..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            "build-tools;35.0.0"
-
-          echo "SDK installation completed."
-
-          echo "Installed platforms:"
-          ls -la "$SDK/platforms"
-
-          echo "Installed build tools:"
-          ls -la "$SDK/build-tools"
-
-          echo "Installed platform tools:"
-          ls -la "$SDK/platform-tools"
-
-      # 8. Export Android environment
-      - name: Configure Android environment
-        run: |
-          set -e
-
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-
-          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
-
-          echo "ANDROIDAPI=35" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=23" >> "$GITHUB_ENV"
-
-          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
-          echo "$SDK/tools/bin" >> "$GITHUB_PATH"
-
-          echo "Android SDK:"
-          echo "$SDK"
-
-          echo "sdkmanager:"
-          "$SDK/tools/bin/sdkmanager" --version
-
-          echo "adb:"
-          "$SDK/platform-tools/adb" version
-
-      # 9. Verify project
-      - name: Verify Frahoosh project
-        run: |
-          set -e
-
-          echo "Project root:"
-          pwd
-
-          echo "Checking buildozer.spec..."
 
           test -f buildozer.spec
-
-          echo "Checking mobile directory..."
-
           test -d mobile
-
-          echo "Checking main.py..."
-
           test -f mobile/main.py
-
-          echo "Python syntax check..."
 
           python -m compileall -q mobile
 
-          echo "Project structure:"
+          echo "Project verified."
 
-          find mobile -type f \
-            ! -path "*/__pycache__/*" \
-            | sort
+      - name: Configure Buildozer
+        run: |
+          set -e
 
-      # 10. Clean previous build
-      - name: Clean previous Buildozer build
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("buildozer.spec")
+          text = path.read_text()
+
+          replacements = {
+              "android.api": "35",
+              "android.minapi": "23",
+              "android.ndk": "28c",
+              "android.ndk_api": "23",
+              "android.archs": "arm64-v8a,armeabi-v7a",
+              "android.accept_sdk_license": "True",
+              "android.skip_update": "False",
+          }
+
+          lines = text.splitlines()
+          result = []
+          found = set()
+
+          for line in lines:
+              stripped = line.strip()
+
+              replaced = False
+
+              for key, value in replacements.items():
+                  if stripped.startswith(key + " =") or stripped.startswith("#" + key + " ="):
+                      result.append(f"{key} = {value}")
+                      found.add(key)
+                      replaced = True
+                      break
+
+              if not replaced:
+                  result.append(line)
+
+          missing = [
+              f"{key} = {value}"
+              for key, value in replacements.items()
+              if key not in found
+          ]
+
+          if missing:
+              result.append("")
+              result.append("[app]")
+              result.extend(missing)
+
+          path.write_text("\n".join(result) + "\n")
+
+          print(path.read_text())
+          PY
+
+      - name: Clean Buildozer
         run: |
           set -e
 
@@ -235,137 +135,46 @@ jobs:
 
           mkdir -p bin
 
-      # 11. Re-create SDK after clean
-      #     because the previous step removes .buildozer
-      - name: Restore Buildozer SDK after clean
-        run: |
-          set -e
-
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-          TMP="$RUNNER_TEMP/android-sdk-final"
-
-          rm -rf "$SDK"
-          rm -rf "$TMP"
-
-          mkdir -p "$SDK"
-          mkdir -p "$TMP"
-
-          cd "$TMP"
-
-          curl -L --fail \
-            -o commandlinetools.zip \
-            https://dl.google.com/android/repository/commandlinetools-linux-6514223_latest.zip
-
-          unzip -q commandlinetools.zip
-
-          mkdir -p "$SDK/tools"
-
-          cp -R cmdline-tools/. "$SDK/tools/"
-
-          chmod +x "$SDK/tools/bin/sdkmanager"
-
-          echo "Accepting licenses again..."
-
-          yes | "$SDK/tools/bin/sdkmanager" \
-            --sdk_root="$SDK" \
-            --licenses || true
-
-          echo "Installing platform-tools..."
-
-          yes | "$SDK/tools/bin/sdkmanager" \
-            --sdk_root="$SDK" \
-            "platform-tools"
-
-          echo "Installing Android 35..."
-
-          yes | "$SDK/tools/bin/sdkmanager" \
-            --sdk_root="$SDK" \
-            "platforms;android-35"
-
-          echo "Installing build-tools 35..."
-
-          yes | "$SDK/tools/bin/sdkmanager" \
-            --sdk_root="$SDK" \
-            "build-tools;35.0.0"
-
-          echo "Final SDK verification..."
-
-          test -f "$SDK/tools/bin/sdkmanager"
-          test -d "$SDK/platform-tools"
-          test -d "$SDK/platforms/android-35"
-          test -d "$SDK/build-tools/35.0.0"
-
-          echo "SDK is ready for Buildozer."
-
-      # 12. Build APK
       - name: Build APK
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
           ACCEPT_EULA: "Y"
-          ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
-          ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
         run: |
           set -e
 
-          echo "========================================"
-          echo "BUILDING FRAHOOSH APK"
-          echo "========================================"
-
-          echo "Android SDK:"
-          echo "$ANDROID_HOME"
-
-          echo "sdkmanager:"
-          "$ANDROID_HOME/tools/bin/sdkmanager" --version
-
-          echo "Running Buildozer..."
+          echo "Starting Android build..."
 
           yes | buildozer -v android debug
 
-      # 13. Verify APK
       - name: Verify APK
         run: |
           set -e
 
-          echo "========================================"
-          echo "VERIFYING APK"
-          echo "========================================"
+          echo "APK files:"
+          find bin -maxdepth 1 -type f -name "*.apk" -print
 
-          ls -lah bin/
-
-          APK_COUNT=$(find bin \
-            -maxdepth 1 \
-            -type f \
-            -name "*.apk" \
-            | wc -l)
-
-          echo "APK count:"
-          echo "$APK_COUNT"
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
 
           if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: APK was not generated."
+            echo "ERROR: No APK was generated."
             exit 1
           fi
 
-          APK=$(find bin \
-            -maxdepth 1 \
-            -type f \
-            -name "*.apk" \
-            | head -n 1)
+          APK=$(find bin -maxdepth 1 -type f -name "*.apk" | head -n 1)
 
-          echo "APK:"
+          echo "APK generated:"
           echo "$APK"
 
           echo "APK size:"
           ls -lh "$APK"
 
-          echo "APK SHA256:"
+          echo "SHA256:"
           sha256sum "$APK"
 
-      # 14. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: frahoosh-apk
           path: bin/*.apk
           if-no-files-found: error
-```
+``
