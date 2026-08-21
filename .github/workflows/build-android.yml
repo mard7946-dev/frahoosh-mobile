@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -61,13 +62,19 @@ jobs:
           python -m pip install "Cython==0.29.36"
           python -m pip install buildozer
 
-          echo "Python:"
+          echo "========================================"
+          echo "PYTHON"
+          echo "========================================"
           python --version
 
-          echo "Cython:"
+          echo "========================================"
+          echo "CYTHON"
+          echo "========================================"
           cython --version
 
-          echo "Buildozer:"
+          echo "========================================"
+          echo "BUILDOZER"
+          echo "========================================"
           buildozer --version
 
       - name: Verify project
@@ -75,7 +82,7 @@ jobs:
           set -e
 
           echo "========================================"
-          echo "VERIFY PROJECT"
+          echo "VERIFY FRAHOOSH PROJECT"
           echo "========================================"
 
           test -f buildozer.spec
@@ -85,19 +92,19 @@ jobs:
           echo "Python syntax check..."
           python -m compileall -q mobile
 
-          echo "Project files:"
+          echo "Project structure:"
           find mobile -type f \
             ! -path "*/__pycache__/*" \
             | sort
 
           echo "Project verification completed."
 
-      - name: Prepare Buildozer configuration
+      - name: Prepare buildozer.spec
         run: |
           set -e
 
           echo "========================================"
-          echo "PREPARE BUILDOZER"
+          echo "PREPARE BUILDOZER SPEC"
           echo "========================================"
 
           python - <<'PY'
@@ -106,7 +113,7 @@ jobs:
           path = Path("buildozer.spec")
           text = path.read_text()
 
-          replacements = {
+          settings = {
               "android.api": "35",
               "android.minapi": "23",
               "android.ndk": "28c",
@@ -114,25 +121,29 @@ jobs:
           }
 
           lines = text.splitlines()
-          output = []
+          result = []
+          found = set()
 
           for line in lines:
               stripped = line.strip()
-
               replaced = False
 
-              for key, value in replacements.items():
+              for key, value in settings.items():
                   if stripped.startswith(key + " ="):
-                      output.append(f"{key} = {value}")
+                      result.append(f"{key} = {value}")
+                      found.add(key)
                       replaced = True
                       break
 
               if not replaced:
-                  output.append(line)
+                  result.append(line)
 
-          path.write_text("\n".join(output) + "\n")
+          for key, value in settings.items():
+              if key not in found:
+                  result.append(f"{key} = {value}")
 
-          print("buildozer.spec:")
+          path.write_text("\n".join(result) + "\n")
+
           print(path.read_text())
           PY
 
@@ -140,86 +151,16 @@ jobs:
         run: |
           set -e
 
+          echo "========================================"
+          echo "CLEAN BUILDOZER"
+          echo "========================================"
+
           rm -rf .buildozer
           rm -rf bin
 
           mkdir -p bin
 
-      - name: Initialize Buildozer Android platform
-        run: |
-          set -e
-
-          echo "========================================"
-          echo "INITIALIZE BUILDOZER ANDROID PLATFORM"
-          echo "========================================"
-
-          buildozer android clean || true
-
-          buildozer android update || true
-
-          echo "Buildozer platform initialization completed."
-
-      - name: Accept Android SDK licenses
-        run: |
-          set -e
-
-          echo "========================================"
-          echo "ACCEPT ANDROID SDK LICENSES"
-          echo "========================================"
-
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
-
-          echo "SDK:"
-          echo "$SDK"
-
-          if [ ! -d "$SDK" ]; then
-            echo "ERROR: Buildozer SDK directory was not created."
-            exit 1
-          fi
-
-          echo "SDK contents:"
-          find "$SDK" -maxdepth 2 -type d | sort | head -100
-
-          SDKMANAGER=""
-
-          if [ -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
-            SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
-          elif [ -x "$SDK/cmdline-tools/bin/sdkmanager" ]; then
-            SDKMANAGER="$SDK/cmdline-tools/bin/sdkmanager"
-          elif [ -x "$SDK/tools/bin/sdkmanager" ]; then
-            SDKMANAGER="$SDK/tools/bin/sdkmanager"
-          fi
-
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager was not found."
-            find "$SDK" -name sdkmanager -type f -print
-            exit 1
-          fi
-
-          echo "Using sdkmanager:"
-          echo "$SDKMANAGER"
-
-          echo "Accepting licenses..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            --licenses || true
-
-          echo "Installing required SDK components..."
-
-          yes | "$SDKMANAGER" \
-            --sdk_root="$SDK" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-          echo "SDK installation completed."
-
-          echo "Installed build-tools:"
-          ls -lah "$SDK/build-tools"
-
-          echo "Installed platforms:"
-          ls -lah "$SDK/platforms"
+          echo "Clean completed."
 
       - name: Build APK
         env:
@@ -232,7 +173,12 @@ jobs:
           echo "BUILD FRAHOOSH APK"
           echo "========================================"
 
-          yes | buildozer -v android debug
+          echo "Buildozer version:"
+          buildozer --version
+
+          echo "Starting Android build..."
+
+          buildozer -v android debug
 
       - name: Verify APK
         run: |
@@ -242,28 +188,43 @@ jobs:
           echo "VERIFY APK"
           echo "========================================"
 
-          echo "bin directory:"
+          if [ ! -d bin ]; then
+            echo "ERROR: bin directory does not exist."
+            exit 1
+          fi
+
           ls -lah bin/
 
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+          APK_COUNT=$(find bin \
+            -maxdepth 1 \
+            -type f \
+            -name "*.apk" \
+            | wc -l)
 
-          echo "APK count:"
-          echo "$APK_COUNT"
+          echo "APK count: $APK_COUNT"
 
           if [ "$APK_COUNT" -eq 0 ]; then
             echo "ERROR: APK was not generated."
             exit 1
           fi
 
-          APK=$(find bin -maxdepth 1 -type f -name "*.apk" | head -n 1)
+          APK=$(find bin \
+            -maxdepth 1 \
+            -type f \
+            -name "*.apk" \
+            | head -n 1)
+
+          echo "========================================"
+          echo "APK GENERATED"
+          echo "========================================"
 
           echo "APK:"
           echo "$APK"
 
-          echo "APK size:"
+          echo "Size:"
           ls -lh "$APK"
 
-          echo "APK SHA256:"
+          echo "SHA256:"
           sha256sum "$APK"
 
           echo "APK successfully generated."
@@ -274,4 +235,4 @@ jobs:
           name: frahoosh-apk
           path: bin/*.apk
           if-no-files-found: error
-``
+```
